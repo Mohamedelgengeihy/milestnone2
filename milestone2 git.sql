@@ -1,5 +1,5 @@
 ﻿CREATE DATABASE GamifiedEduPlatform;
-
+milestone
 USE GamifiedEduPlatform;
 
 -- Table for storing learner information
