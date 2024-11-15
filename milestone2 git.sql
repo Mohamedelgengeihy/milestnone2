@@ -1,5 +1,5 @@
 ﻿CREATE DATABASE GamifiedEduPlatform;
-
+momom
 USE GamifiedEduPlatform;
 
 -- Table for storing learner information
