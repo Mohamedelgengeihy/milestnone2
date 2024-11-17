@@ -224,15 +224,6 @@ CREATE TABLE Emotionalfeedback_review (
     FOREIGN KEY (InstructorID) REFERENCES Instructor(InstructorID)
 );
 
-/*--Table for relationship between personalization profiles and learner
-CREATE TABLE LearnerProfile (
-ProfileID INT,
-LearnerID INT,
-PRIMARY KEY (ProfileID , LearnerID),
-FOREIGN KEY (ProfileID) REFERENCES PersonalizationProfiles (ProfileID) ON DELETE CASCADE ON UPDATE CASCADE,
-FOREIGN KEY (LearnerID) REFERENCES Learner (LearnerID)ON DELETE CASCADE ON UPDATE CASCADE,
-);
-*/
 CREATE TABLE Course_enrollment (
     EnrollmentID INT PRIMARY KEY,
     CourseID INT,
@@ -446,24 +437,25 @@ END;
 
 
 
-
-CREATE PROCEDURE ViewInfo
-@LearnerID INT
+--Retrieve all the information for any student using their ID
+CREATE PROCEDURE ViewInfo(@LearnerID INT)
 AS
+BEGIN
 SELECT * FROM Learners
-WHERE LearnerID = @LearnerID
+WHERE LearnerID = @LearnerID;
+END;
 
-
-CREATE PROCEDURE LearnerInfo
-@LearnerID INT
+--Retrieve all the information from all the profiles of a certain learner
+CREATE PROCEDURE LearnerInfo(@LearnerID INT)
 AS
+BEGIN
 SELECT * FROM LearnerProfiles
-WHERE LearnerID = @LearnerID
+WHERE LearnerID = @LearnerID;
+END;
 
-
-CREATE PROCEDURE EmotionalState
-    @LearnerID INT,
-    @emotional_state VARCHAR(50) OUTPUT
+--Retrieve the latest emotional state of a learner
+CREATE PROCEDURE EmotionalState(@LearnerID INT,@emotional_state VARCHAR(50) OUTPUT)
+    
 AS
 BEGIN
     SELECT @emotional_state = EmotionalState
@@ -476,25 +468,112 @@ BEGIN
     );
 END
 
-CREATE PROCEDURE LogDetails
-@LearnerID INT
+
+-- 4) View the latest interaction logs for a certain Learner
+CREATE PROCEDURE LogDetails (@LearnerID INT)
 AS
-SELECT * FROM InteractionLogs
-WHERE LearnerID = @LearnerID
+BEGIN
+    SELECT * FROM InteractionLogs
+    WHERE LearnerID = @LearnerID ORDER BY Timestamp DESC;
+    END;
 
 
-CREATE PROCEDURE InstructorReview
-@InstructorID INT
+    --View all the Emotional feedbacks that a certain Instructor reviewed
+CREATE PROCEDURE InstructorReview (@InstructorID INT)
 AS
-SELECT feedback
+BEGIN
+SELECT *
 FROM EmotionalFeedback_review
-WHERE InstuctorId = @InstructorID
+WHERE InstuctorId = @InstructorID AND Reviewed = 1;
+END;
 
 
-CREATE PROCEDURE CourseRemove
-    @CourseID INT
+--Delete a course from the database when it's no longer being taught
+CREATE PROCEDURE CourseRemove (@CourseID INT)
 AS
 BEGIN
     DELETE FROM Courses
     WHERE CourseID = @CourseID;
-END
+END;
+
+--View the assessment with the highest Maximum points for each course
+CREATE PROCEDURE HighestGrade
+AS
+  BEGIN 
+    SELECT CourseID, MAX(MaxPoints) AS HighestPoints 
+    FROM Assessment
+    GROUP BY CourseID;
+    END;
+
+--View all the courses taught by more than one instructor
+CREATE PROCEDURE InstructorCount
+AS
+BEGIN 
+    SELECT CourseID, COUNT(InstructorID) AS IntsructorCount
+    FROM CourseInstructors
+    GROUP BY CourseID
+    HAVING COUNT(InstructorID) > 1;
+    END;
+
+ --View all the notifications sent to a certain Learner
+CREATE PROCEDURE ViewNot(@LearnerID INT)
+AS
+BEGIN 
+    SELECT * FROM Notification
+    WHERE LearnerID = @LearnerID;
+    END;
+
+    --Create a new discussion forum for a given module
+    CREATE PROCEDURE CreateDiscussion(@ModuleID INT, @CourseID INT, @Title VARCHAR(50), @Description VARCHAR(50))
+    AS 
+    BEGIN
+        INSERT INTO DiscussionForums (ModuleID, CourseID, Title, Description)
+        VALUES (@ModuleID, @CourseID, @Title, @Description);
+        END;
+
+   --Remove a certain badge from the database
+CREATE PROCEDURE RemoveBadge(@BadgeID INT)
+AS
+BEGIN
+    DELETE FROM Badges WHERE BadgeID = @BadgeID;
+END;
+
+--Delete all the available quests that belong to a certain criterion
+CREATE PROCEDURE CriteriaDelete(@Criteria VARCHAR(50))
+AS
+BEGIN
+    DELETE FROM Quests WHERE Criteria = @Criteria;
+END;
+
+--Mark notifications as read or delete them
+CREATE PROCEDURE NotificationUpdate(@LearnerID INT, @NotificationID INT, @ReadStatus BIT)
+AS
+BEGIN
+    UPDATE Notifications SET ReadStatus = @ReadStatus WHERE LearnerID = @LearnerID AND NotificationID = @NotificationID;
+END;
+
+--View emotional feedback trends over time for each learner
+CREATE PROCEDURE EmotionalTrendAnalysis(@CourseID INT, @ModuleID INT, @TimePeriod VARCHAR(50))
+AS
+BEGIN
+    SELECT LearnerID, EmotionalState, COUNT(*) AS FeedbackCount FROM LearnerEmotions
+    WHERE CourseID = @CourseID AND ModuleID = @ModuleID AND Timestamp > DATEADD(MONTH, -CAST(@TimePeriod AS INT), GETDATE())
+    GROUP BY LearnerID, EmotionalState;
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
