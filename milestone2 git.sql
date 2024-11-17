@@ -12,18 +12,19 @@ CREATE TABLE Learner (
     birth_date datetime,
     country VARCHAR (50),
     cultural_background VARCHAR (100),
-    
-
 );
 
 --Table for multivalue skills in learner
 CREATE TABLE skills(
-PRIMARY KEY(Skill, LearnerID),
-Skill VARCHAR (20) ,
+LearnerID INT,
+skill_name VARCHAR (20) ,
+PRIMARY KEY(LearnerID,skill_name),
 FOREIGN KEY (LearnerID) REFERENCES Learner (LearnerID) ON DELETE CASCADE ON UPDATE CASCADE,
 );
 --Table for multivalue learningPreferences in learner
-CREATE TABLE learningpreferences(
+CREATE TABLE learning_preferences (
+Skill INT,
+LearnerID INT,
 PRIMARY KEY(Skill, LearnerID),
 FOREIGN KEY (LearnerID) REFERENCES Learner (LearnerID) ON DELETE CASCADE ON UPDATE CASCADE,
 );
@@ -33,16 +34,26 @@ CREATE TABLE SkillProgression (
     proficiency_level INT,
     LearnerID INT,
     skill_name VARCHAR(100),
-    // timestamp DATETIME,
-    FOREIGN KEY (LearnerID, skill_name) REFERENCES Skills(LearnerID, skill)
+    timestamp DATETIME,
+    --FOREIGN KEY (LearnerID, skill_name) REFERENCES Skills(LearnerID, skill)
+FOREIGN KEY (LearnerID, skill_name) REFERENCES skills (LearnerID, skill_name) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE
 );
 
---Table to show relations of learners and skills
-CREATE TABLE learnerskills(
-LearnerID INT PRIMARY KEY,
 
-FOREIGN KEY (ProfileID) REFERENCES PersonalizationProfiles (ProfileID) ON DELETE CASCADE ON UPDATE CASCADE,,
 
+--Table for storing personalization profiles
+CREATE TABLE PersonalizationProfiles(
+LearnerID INT,
+ProfileID INT,
+prefered_content_type VARCHAR (100),
+emotional_state VARCHAR (50),
+personality_type VARCHAR (100),
+PRIMARY KEY (LearnerID, ProfileID),
+FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
+
+);
 
 -- Table for storing courses
 CREATE TABLE Course (
@@ -58,26 +69,29 @@ CREATE TABLE Course (
 
 -- Table for storing assessments and grades
 CREATE TABLE Assessment (
-    AssessmentID INT PRIMARY KEY,
-    FOREIGN KEY (CourseID)REFERENCES course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
-    FOREIGN KEY (ModuleID)REFERENCES Module (ModuleID) ON DELETE CASCADE ON UPDATE CASCADE,  
+    AssessmentID INT PRIMARY KEY, 
     total_marks INT,
+    CourseID INT,
+    ModuleID INT,
     passing_marks INT,
     criteria VARCHAR(50),
     weightage INT,
     Type VARCHAR (100) ,
     Title VARCHAR (50),
     description VARCHAR (1000),
+    FOREIGN KEY (CourseID)REFERENCES course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
+    FOREIGN KEY (ModuleID)REFERENCES Module (ModuleID) ON DELETE CASCADE ON UPDATE CASCADE, 
 );
 
 -- Table for storing modules within a course
 CREATE TABLE Module (
     ModuleID INT PRIMARY KEY,
-    FOREIGN KEY (CourseID)REFERENCES course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
+    CourseID INT,
     Title VARCHAR(100),
     difficulty_Level VARCHAR(50),
     contentURL VARCHAR (1000),
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
+    FOREIGN KEY (CourseID)REFERENCES course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
+
 );
 
 --multivalued Attribute in Module
@@ -95,7 +109,7 @@ CREATE TABLE ModuleContent (
     CourseID INT,
     content_type VARCHAR(50),
     PRIMARY KEY (ModuleID, CourseID, content_type),
-    FOREIGN KEY (ModuleID) REFERENCES Modules(ModuleID),
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID),
     FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
 );
 
@@ -120,24 +134,6 @@ CREATE TABLE EmotionalFeedback (
 
 );
 
--- Table for storing leaderboard information
-CREATE TABLE Leaderboard (
-    LeaderboardID INT PRIMARY KEY,
-    season VARCHAR (20),
-
-);
---Table for storing personalization profiles
-CREATE TABLE PersonalizationProfiles(
-LearnerID INT,
-ProfileID INT PRIMARY KEY,
-prefered_content_type VARCHAR (100),
-emotional_state VARCHAR (50),
-personality_type VARCHAR (100),
-PRIMARY KEY (LearnerID, ProfileID),
-FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
-
-);
-
 --multivalued Attribute in PersonalizationProfiles
 CREATE TABLE HealthCondtion (
 LearnerID INT,
@@ -158,7 +154,7 @@ CREATE TABLE ContentLibrary (
     metadata VARCHAR(255),
     type VARCHAR(50),
     content_URL VARCHAR(255),
-    FOREIGN KEY (ModuleID) REFERENCES Modules(ModuleID),
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID),
     FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
 );
 -- Creating Learning_activities Table
@@ -169,7 +165,7 @@ CREATE TABLE Learning_activities (
     activity_type VARCHAR(50),
     instruction_details VARCHAR(255),
     Max_points INT,
-    FOREIGN KEY (ModuleID) REFERENCES Modules(ModuleID),
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID),
     FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
 );
 
@@ -224,11 +220,11 @@ CREATE TABLE Emotionalfeedback_review (
     InstructorID INT,
     feedback VARCHAR(255),
     PRIMARY KEY (FeedbackID, InstructorID),
-    FOREIGN KEY (FeedbackID) REFERENCES Emotional_feedback(FeedbackID),
+    FOREIGN KEY (FeedbackID) REFERENCES EmotionalFeedback(FeedbackID),
     FOREIGN KEY (InstructorID) REFERENCES Instructor(InstructorID)
 );
 
---Table for relationship between personalization profiles and learner
+/*--Table for relationship between personalization profiles and learner
 CREATE TABLE LearnerProfile (
 ProfileID INT,
 LearnerID INT,
@@ -236,7 +232,7 @@ PRIMARY KEY (ProfileID , LearnerID),
 FOREIGN KEY (ProfileID) REFERENCES PersonalizationProfiles (ProfileID) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (LearnerID) REFERENCES Learner (LearnerID)ON DELETE CASCADE ON UPDATE CASCADE,
 );
-
+*/
 CREATE TABLE Course_enrollment (
     EnrollmentID INT PRIMARY KEY,
     CourseID INT,
@@ -258,16 +254,26 @@ CREATE TABLE Teaches (
 );
 --many-2-many relation between learners and Leaderboard
 CREATE TABLE Ranking (
-    BoardID INT,
+    LeaderboardID INT,
     LearnerID INT,
     CourseID INT,
     rank INT,
     total_points INT,
-    PRIMARY KEY (BoardID, LearnerID, CourseID),
-    FOREIGN KEY (BoardID) REFERENCES Leaderboard(BoardID),
+    PRIMARY KEY (LeaderboardID, LearnerID, CourseID),
+    FOREIGN KEY (LeaderboardID) REFERENCES Leaderboard(LeaderboardID),
     FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID),
     FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
 );
+
+
+-- Table for storing leaderboard information
+CREATE TABLE Leaderboard (
+    LeaderboardID INT PRIMARY KEY,
+    season VARCHAR (20),
+
+);
+
+
 --LearningGoal table
 CREATE TABLE Learning_goal (
     ID INT PRIMARY KEY,
@@ -349,14 +355,94 @@ CREATE TABLE Quest (
     description VARCHAR(255),
     title VARCHAR(50)
 );
-
+--collaborative table
 CREATE TABLE Collaborative (
     QuestID INT,
     LearnerID INT,
+    deadline INT,
+    Max_num_participants INT,
     PRIMARY KEY (QuestID, LearnerID),
     FOREIGN KEY (QuestID) REFERENCES Quest(QuestID),
     FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
 );
+--many-2-many relationship between Collaborative and Learner
+CREATE TABLE Joins(
+    LearnerID INT,
+    deadline INT,
+    Max_num_participants INT,
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID),
+    FOREIGN KEY (deadline) REFERENCES Collaborative(deadline),
+    FOREIGN KEY (Max_num_participants) REFERENCES Collaborative(Max_num_participants)
+
+);
+--skill_mastery table
+CREATE TABLE skill_Mastery(
+    QuestID INT,
+    LearnerID INT,
+
+    PRIMARY KEY (QuestID, LearnerID),
+    FOREIGN KEY (QuestID) REFERENCES Quest(QuestID),
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
+);
+
+--multivalued attribute in skill mastery
+ CREATE TABLE Skill_Mastery_Skill (
+    LearnerID INT,
+    Skills VARCHAR(255),
+    PRIMARY KEY (LearnerID, Skills),
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
+);
+
+
+
+--many-2-many relationship between Skill_mastery and Learner
+CREATE TABLE Joins (
+    LearnerID INT,
+    Skills VARCHAR(255),
+    CourseID INT,
+    completionstatus VARCHAR(50),
+    PRIMARY KEY (LearnerID, Skills),
+    FOREIGN KEY (LearnerID, Skills) REFERENCES Skill_Mastery_Skill (LearnerID, Skills),
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
+);
+
+
+--Disjoint between Skill_Mastery and Collaborative
+
+CREATE TRIGGER Disjoint
+ON Skill_Mastery
+INSTEAD OF INSERT
+AS
+BEGIN
+    -- Check if any QuestID in the inserted data already exists in the Collaborative table
+    IF EXISTS (
+        SELECT 1
+        FROM Inserted i
+        JOIN Collaborative c ON i.QuestID = c.QuestID
+    )
+    BEGIN
+        -- Raise an error if the QuestID is already in Collaborative
+        RAISERROR ('A Quest cannot be both a Skill_Mastery and a Collaborative.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+
+    -- If no conflict, proceed with the insert
+    INSERT INTO Skill_Mastery (QuestID, LearnerID)
+    SELECT QuestID, LearnerID
+    FROM Inserted;
+END;
+
+
+
+
+
+
+
+
+
+
+
 
 
 
