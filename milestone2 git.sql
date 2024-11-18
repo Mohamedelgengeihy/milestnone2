@@ -1,7 +1,7 @@
 ﻿CREATE DATABASE GamifiedEduPlatform;
 
 USE GamifiedEduPlatform;
-
+--
 -- Table for storing learner information
 CREATE TABLE Learner (
     LearnerID INT PRIMARY KEY,
