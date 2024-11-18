@@ -77,8 +77,10 @@ timestamp DATETIME,
 description VARCHAR, 
 
 FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID),
-FOREIGN KEY (CourseID) REFERENCES Module(CourseID)
+FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
  );
+
+
 
 -- Table for storing assessments and grades
 CREATE TABLE Assessment (
@@ -98,11 +100,13 @@ CREATE TABLE Assessment (
 
 -- Table for storing modules within a course
 CREATE TABLE Module (
-    ModuleID INT PRIMARY KEY,
+    ModuleID INT,
     CourseID INT,
     Title VARCHAR(100),
     difficulty_Level VARCHAR(50),
     contentURL VARCHAR (1000),
+        PRIMARY KEY (ModuleID, CourseID),
+
     FOREIGN KEY (CourseID)REFERENCES Course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
 
 );
