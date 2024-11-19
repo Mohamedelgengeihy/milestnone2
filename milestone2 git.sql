@@ -416,8 +416,9 @@ CREATE TABLE Joins (
 
 
 --Disjoint between Skill_Mastery and Collaborative
-
+GO
 CREATE TRIGGER Disjoint
+
 ON Skill_Mastery
 INSTEAD OF INSERT
 AS
@@ -432,9 +433,9 @@ BEGIN
         -- Raise an error if the QuestID is already in Collaborative
         RAISERROR ('A Quest cannot be both a Skill_Mastery and a Collaborative.', 16, 1);
         ROLLBACK TRANSACTION;
-        RETURN;
-    END
-
+        RETURN;  
+    END;
+  
     -- If no conflict, proceed with the insert
     INSERT INTO Skill_Mastery (QuestID, LearnerID)
     SELECT QuestID, LearnerID
@@ -455,12 +456,16 @@ END;
 
 
 --Retrieve all the information for any student using their ID
-CREATE PROCEDURE ViewInfo(@LearnerID INT)
+GO
+CREATE PROCEDURE ViewInfo(
+@LearnerID INT
+)
 AS
 BEGIN
 SELECT * FROM Learners
 WHERE LearnerID = @LearnerID;
 END;
+GO
 
 --Retrieve all the information from all the profiles of a certain learner
 CREATE PROCEDURE LearnerInfo(@LearnerID INT)
@@ -471,7 +476,10 @@ WHERE LearnerID = @LearnerID;
 END;
 
 --Retrieve the latest emotional state of a learner
-CREATE PROCEDURE EmotionalState(@LearnerID INT,@emotional_state VARCHAR(50) OUTPUT)
+GO
+CREATE PROCEDURE EmotionalState(
+@LearnerID INT,@emotional_state VARCHAR(50) OUTPUT
+)
     
 AS
 BEGIN
@@ -482,9 +490,9 @@ BEGIN
         SELECT MAX(Timestamp)
         FROM LearnerEmotions
         WHERE LearnerID = @LearnerID
-    );
-END
-
+   );
+END;
+GO
 
 -- 4) View the latest interaction logs for a certain Learner
 CREATE PROCEDURE LogDetails (@LearnerID INT)
@@ -496,14 +504,17 @@ BEGIN
 
 
     --View all the Emotional feedbacks that a certain Instructor reviewed
-CREATE PROCEDURE InstructorReview (@InstructorID INT)
+    GO
+CREATE PROCEDURE InstructorReview (
+@InstructorID INT
+)
 AS
 BEGIN
 SELECT *
 FROM EmotionalFeedback_review
 WHERE InstuctorId = @InstructorID AND Reviewed = 1;
 END;
-
+GO
 
 --Delete a course from the database when it's no longer being taught
 CREATE PROCEDURE CourseRemove (@CourseID INT)
@@ -514,6 +525,7 @@ BEGIN
 END;
 
 --View the assessment with the highest Maximum points for each course
+GO
 CREATE PROCEDURE HighestGrade
 AS
   BEGIN 
@@ -521,7 +533,7 @@ AS
     FROM Assessment
     GROUP BY CourseID;
     END;
-
+    GO
 --View all the courses taught by more than one instructor
 CREATE PROCEDURE InstructorCount
 AS
@@ -533,44 +545,60 @@ BEGIN
     END;
 
  --View all the notifications sent to a certain Learner
-CREATE PROCEDURE ViewNot(@LearnerID INT)
+ GO
+CREATE PROCEDURE ViewNot(
+@LearnerID INT
+)
 AS
 BEGIN 
     SELECT * FROM Notification
     WHERE LearnerID = @LearnerID;
     END;
+    GO
 
     --Create a new discussion forum for a given module
+    GO
     CREATE PROCEDURE CreateDiscussion(@ModuleID INT, @CourseID INT, @Title VARCHAR(50), @Description VARCHAR(50))
     AS 
     BEGIN
         INSERT INTO DiscussionForums (ModuleID, CourseID, Title, Description)
         VALUES (@ModuleID, @CourseID, @Title, @Description);
         END;
-
+        GO
    --Remove a certain badge from the database
-CREATE PROCEDURE RemoveBadge(@BadgeID INT)
+CREATE PROCEDURE RemoveBadge(
+@BadgeID INT
+)
 AS
 BEGIN
     DELETE FROM Badges WHERE BadgeID = @BadgeID;
 END;
 
 --Delete all the available quests that belong to a certain criterion
+GO
 CREATE PROCEDURE CriteriaDelete(@Criteria VARCHAR(50))
 AS
 BEGIN
     DELETE FROM Quests WHERE Criteria = @Criteria;
 END;
-
+GO
 --Mark notifications as read or delete them
-CREATE PROCEDURE NotificationUpdate(@LearnerID INT, @NotificationID INT, @ReadStatus BIT)
+CREATE PROCEDURE NotificationUpdate
+(@LearnerID INT, 
+@NotificationID INT, 
+@ReadStatus BIT
+)
 AS
 BEGIN
     UPDATE Notifications SET ReadStatus = @ReadStatus WHERE LearnerID = @LearnerID AND NotificationID = @NotificationID;
 END;
 
 --View emotional feedback trends over time for each learner
-CREATE PROCEDURE EmotionalTrendAnalysis(@CourseID INT, @ModuleID INT, @TimePeriod VARCHAR(50))
+CREATE PROCEDURE EmotionalTrendAnalysis(
+@CourseID INT, 
+@ModuleID INT,
+@TimePeriod VARCHAR(50)
+)
 AS
 BEGIN
     SELECT LearnerID, EmotionalState, COUNT(*) 
@@ -855,6 +883,119 @@ SELECT LearnerID, Name
     WHERE CourseID = CourseID AND InstructorID = InstructorID;
 END;
 
+--See the last time a discussion forum was active
+CREATE PROCEDURE LastActive(
+@ForumID INT
+)
+AS
+BEGIN
+SELECT MAX(Timestamp) AS LastActive
+FROM ForumPosts
+WHERE DiscussionID = @ForumID;
+END;
+
+--Find the most common emotional state for the learners
+
+CREATE PROCEDURE CommonEmotionalState (
+@state VARCHAR(50) OUTPUT
+)
+AS
+BEGIN
+SELECT TOP 1 EmotionalState --retrieves the most frequent emotional state
+FROM EmotionalFeedback
+GROUP BY EmotionalState
+ORDER BY COUNT(*) DESC;
+END;
+
+--view all modules for a certain course sorted by their diffiulty
+CREATE PROCEDURE ModuleDifficulty(
+@CourseID INT
+)
+AS
+BEGIN
+SELECT *
+FROM Module
+WHERE CourseID = @CourseID 
+ORDER BY difficulty_Level ASC;
+END;
 
 
+--View the skill with the highest proficiency level for a certain learner
+CREATE PROCEDURE ProficiencyLevel(
+@LearnerID INT
+)
+AS 
+BEGIN
+    SELECT TOP 1 SkillName, ProficiencyLevel
+    FROM LearnerSkills
+    WHERE LearnerID = @LearnerID
+    ORDER BY ProficiencyLevel DESC;
+    END;
 
+    --Update a learner proficiency level for a certain skill
+    CREATE PROCEDURE ProficiencyUpdate(
+    @SkillName VARCHAR(50),
+    @LearnerID INT,
+    @Level VARCHAR(50)
+    )
+    AS
+    BEGIN 
+    UPDATE LearnerSkills
+    SET ProficiencyLevel = @Level
+    WHERE SkillName = @SkillName AND LearnerID = @LearnerID;
+    END;
+
+    --find the learner with the least number of badges earned
+    CREATE PROCEDURE LeastBadge(
+    @LearnerID INT
+    )
+    AS
+    BEGIN 
+        SELECT TOP 1 LearnerID 
+        FROM Achievement
+        GROUP BY LearnerID
+        ORDER BY COUNT(BadgeID) ASC;
+        END;
+
+        --find the most preferred learning type for the learners
+        CREATE PROCEDURE PreferredType(
+        @Type VARCHAR(50) 
+        )
+
+        AS
+        BEGIN
+            SELECT TOP 1 PreferredContetntType
+            FROM LearnerProfiles
+            GROUP BY PreferredContentType
+            ORDER BY COUNT(*) DESC;
+            END;
+
+        --Generate analytics on assessment scores across modules or courses
+        CREATE PROCEDURE AssessmentAnalytics (
+        @CourseID INT,
+        @ModuleID INT
+)
+        AS
+        BEGIN
+            SELECT AVG(Score) AS AverageScore, ModuleID, CourseID
+            FROM AssessmentResults ar
+            INNER JOIN Assessments a ON ar.AssessmentID = a.AssessmentID
+            WHERE a.CourseID = @CourseID AND a.ModuleID = @ModuleID
+            GROUP BY ModuleID, CourseID;
+        END;
+
+        --View trends in learners’ emotional feedback to support well-being
+        CREATE PROCEDURE EmotionalTrendAnalysis (
+    @CourseID INT,
+    @ModuleID INT,
+    @TimePeriod VARCHAR(50)
+)
+AS
+BEGIN
+    SELECT EmotionalState, COUNT(*) AS Frequency, Timestamp
+    FROM EmotionalFeedback ef
+    INNER JOIN Enrollments e ON ef.LearnerID = e.LearnerID
+    WHERE e.CourseID = @CourseID AND e.ModuleID = @ModuleID
+    GROUP BY EmotionalState, Timestamp
+    ORDER BY Timestamp ASC;
+END;
