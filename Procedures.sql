@@ -1,7 +1,7 @@
 ﻿CREATE DATABASE GamifiedEduPlatform;
 
 USE GamifiedEduPlatform;
-
+--
 --Retrieve all the information for any student using their ID
 GO
 CREATE PROCEDURE ViewInfo(
