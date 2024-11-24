@@ -141,11 +141,11 @@ BEGIN
 END;
 
 --View emotional feedback trends over time for each learner
-CREATE PROCEDURE EmotionalTrendAnalysis(
+CREATE PROCEDURE EmotionalTrendAnalysis
 @CourseID INT, 
 @ModuleID INT,
 @TimePeriod VARCHAR(50)
-)
+
 AS
 BEGIN
     SELECT LearnerID, EmotionalState, COUNT(*) 
