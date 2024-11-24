@@ -9,46 +9,50 @@ CREATE PROCEDURE ViewInfo(
 )
 AS
 BEGIN
-SELECT * FROM Learners
+SELECT * FROM Learner
 WHERE LearnerID = @LearnerID;
 END;
+DROP PROCEDURE ViewInfo;
 GO
+EXEC ViewInfo @LearnerID = 1;
 
 --Retrieve all the information from all the profiles of a certain learner
 CREATE PROCEDURE LearnerInfo(@LearnerID INT)
 AS
 BEGIN
-SELECT * FROM LearnerProfiles
+SELECT * FROM PersonalizationProfiles
 WHERE LearnerID = @LearnerID;
 END;
+DROP PROCEDURE LearnerInfo
+EXEC LearnerInfo @LearnerID = 1;
 
 --Retrieve the latest emotional state of a learner
 GO
-CREATE PROCEDURE EmotionalState(
-@LearnerID INT,@emotional_state VARCHAR(50) OUTPUT
-)
-    
+CREATE PROCEDURE EmotionalState
+@LearnerID INT
 AS
 BEGIN
-    SELECT @emotional_state = EmotionalState
-    FROM LearnerEmotions
+    SELECT EmotionalState
+    FROM EmotionalFeedback
     WHERE LearnerID = @LearnerID
-    AND Timestamp = (
-        SELECT MAX(Timestamp)
-        FROM LearnerEmotions
-        WHERE LearnerID = @LearnerID
-   );
 END;
-GO
+DROP Procedure EmotionalState
+
+EXEC EmotionalState @LearnerID = 1;
+
+
 
 -- 4) View the latest interaction logs for a certain Learner
+GO
 CREATE PROCEDURE LogDetails (@LearnerID INT)
 AS
 BEGIN
-    SELECT * FROM InteractionLogs
-    WHERE LearnerID = @LearnerID ORDER BY Timestamp DESC;
+    SELECT LogID 
+    FROM Interaction_log
+    WHERE LearnerID = @LearnerID ;
     END;
-
+    DROP PROC LogDetails
+EXEC LogDetails @LearnerID = 1;
 
     --View all the Emotional feedbacks that a certain Instructor reviewed
     GO
@@ -237,7 +241,9 @@ END;
 CREATE PROCEDURE ViewScore(@LearnerID INT, @AssessmentID INT)
 AS
 BEGIN
-    SELECT Score FROM Assessments WHERE LearnerID = @LearnerID AND AssessmentID = @AssessmentID;
+    SELECT Score
+    FROM Assessments
+    WHERE LearnerID = @LearnerID AND AssessmentID = @AssessmentID;
 END;
 
 --View all the assessments I took and its grades for a certain module
