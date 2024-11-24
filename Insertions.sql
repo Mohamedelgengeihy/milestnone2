@@ -219,16 +219,38 @@ VALUES
 
 SELECT * FROM Skill_Mastery_Skill
 
-
-
-/*
-INSERT INTO Learner (LearnerID, first_name, last_name, Preferred_content_type, Gender, birth_date, country, cultural_background)
+-- EmotionalFeedback
+INSERT INTO EmotionalFeedback (FeedbackID, LearnerID, timestamp, emotionalState) 
 VALUES
-(1, 'Alice', 'Smith', 'Video', 'Female', '2001-06-15', 'USA', 'Western'),
-(2, 'Bob', 'Johnson', 'Text', 'Male', '1999-08-20', 'UK', 'Western'),
-(3, 'Charlie', 'Davis', 'Interactive', 'Non-binary', '2000-12-05', 'Canada', 'Western');
+(1, 1, '2024-11-01 10:00:00', 'Happy'),
+(2, 2, '2024-11-02 14:30:00', 'Neutral');
+
+SELECT * FROM EmotionalFeedback
 
 
+-- Interaction_log
+INSERT INTO Interaction_log VALUES
+(1, 1, 1, 30, 'Viewed Module Content');
+
+INSERT INTO Interaction_log VALUES
+(2, 2, 2, 45, 'Completed Quiz');
+
+select * from Interaction_log
+
+
+-- Learning_activities
+INSERT INTO Learning_activities (ActivityID, ModuleID, CourseID, activity_type, instruction_details, Max_points) 
+VALUES
+(1, 1, 1, 'Quiz', 'Answer 10 questions about variables.', 20),
+(2, 2, 2, 'Assignment', 'Complete an array implementation task.', 50);
+
+
+--Emotionalfeedback_review
+INSERT INTO Emotionalfeedback_review (FeedbackID, InstructorID, feedback) 
+VALUES
+(1, 1, 'Positive emotional response observed.'),
+(2, 2, 'Neutral emotional state, need engagement.');
+/*
 
 INSERT INTO skills VALUES
 (1, 'JavaScript'),
@@ -339,11 +361,6 @@ VALUES
 (1, 1, 1, 'Variables Tutorial', 'Learn about variables.', 'Variables,Basics', 'Video', 'http://example.com/variables-video'),
 (2, 2, 2, 'Arrays Tutorial', 'Explore arrays.', 'Arrays,Intermediate', 'Interactive', 'http://example.com/arrays-interactive');
 
--- Learning_activities
-INSERT INTO Learning_activities (ActivityID, ModuleID, CourseID, activity_type, instruction_details, Max_points) 
-VALUES
-(1, 1, 1, 'Quiz', 'Answer 10 questions about variables.', 20),
-(2, 2, 2, 'Assignment', 'Complete an array implementation task.', 50);
 
 -- Learning_path
 INSERT INTO Learning_path (pathID, LearnerID, ProfileID, completion_status, custom_content, adaptive_rules) 
@@ -351,11 +368,6 @@ VALUES
 (1, 1, 1, 'In Progress', 'Additional videos for variables.', 'Focus on weak areas'),
 (2, 2, 2, 'In Progress', 'Extra quizzes on algorithms.', 'Target algorithm basics');
 
--- Interaction_log
-INSERT INTO Interaction_log (LogID, activity_ID, LearnerID, Duration, Timestamp, action_type) 
-VALUES
-(1, 1, 1, '00:15:30', '2024-11-01 12:00:00', 'Start Activity'),
-(2, 2, 2, '00:45:00', '2024-11-02 14:00:00', 'Submit Activity');
 
 
 
@@ -371,11 +383,7 @@ VALUES
 (1, 1, '2024-11-01 10:00:00', 'Happy'),
 (2, 2, '2024-11-02 14:30:00', 'Neutral');
 
--- Emotionalfeedback_review
-INSERT INTO Emotionalfeedback_review (FeedbackID, InstructorID, feedback) 
-VALUES
-(1, 1, 'Positive emotional response observed.'),
-(2, 2, 'Neutral emotional state, need engagement.');
+
 
 
 

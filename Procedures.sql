@@ -61,19 +61,24 @@ CREATE PROCEDURE InstructorReview (
 )
 AS
 BEGIN
-SELECT *
+SELECT feedback
 FROM EmotionalFeedback_review
-WHERE InstuctorId = @InstructorID AND Reviewed = 1;
+WHERE InstructorID = @InstructorID;
 END;
-GO
+exec InstructorReview @InstructorID = 1
+DROP PROCEDURE InstructorReview
+
 
 --Delete a course from the database when it's no longer being taught
+GO
 CREATE PROCEDURE CourseRemove (@CourseID INT)
 AS
 BEGIN
     DELETE FROM Courses
     WHERE CourseID = @CourseID;
 END;
+
+
 
 --View the assessment with the highest Maximum points for each course
 GO

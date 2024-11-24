@@ -169,8 +169,7 @@ CREATE TABLE EmotionalFeedback (
     LearnerID INT,
     timestamp DATETIME,
     emotionalState VARCHAR(50),
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID) ON DELETE CASCADE ON UPDATE CASCADE ,
-
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID),
 );
 
 --multivalued Attribute in PersonalizationProfiles
@@ -207,6 +206,7 @@ CREATE TABLE Learning_activities (
     FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID)  ,
     FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  
 );
+DROP TABLE Learning_activities
 
 -- Creating Learning_path Table
 CREATE TABLE Learning_path (
@@ -226,12 +226,13 @@ CREATE TABLE Interaction_log (
     LogID INT PRIMARY KEY,
     activity_ID INT,
     LearnerID INT,
-    Duration TIME,
-    Timestamp TIMESTAMP,
+    Duration INT,
+    Timestamp as current_timestamp,
     action_type VARCHAR(50),
     FOREIGN KEY (activity_ID) REFERENCES Learning_activities(ActivityID)  ,
     FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  
 );
+DROP TABLE Interaction_log
 -- Creating Instructor Table
 CREATE TABLE Instructor (
     InstructorID INT PRIMARY KEY,
