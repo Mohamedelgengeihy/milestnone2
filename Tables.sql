@@ -1,11 +1,10 @@
 ﻿USE GamifiedEduPlatform;
---
+
 -- Table for storing learner information
 CREATE TABLE Learner (
     LearnerID INT PRIMARY KEY,
     first_name VARCHAR (50),
     last_name VARCHAR(50),
-    Preferred_content_type VARCHAR(50),
     Gender VARCHAR (20),
     birth_date datetime,
     country VARCHAR (50),
@@ -69,13 +68,13 @@ CREATE TABLE Course (
     description VARCHAR (50),
     Pre_requisites VARCHAR (50),
 );
-
+DROP TABLE Course
 CREATE TABLE CoursePrerequisite (
 CourseID INT NOT NULL,
 Prereq INT NOT NULL,
 PRIMARY KEY(CourseID, Prereq),
-FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE,
-FOREIGN KEY (Prereq) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
+FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ,
+FOREIGN KEY (Prereq) REFERENCES Course(CourseID) 
 );
 
 CREATE TABLE Takenassessment( 
@@ -84,7 +83,7 @@ LearnerID INT,
 scoredPoint INT,
 FOREIGN KEY (AssessmentID) REFERENCES Assessment(AssessmentID)  ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ON DELETE CASCADE ON UPDATE CASCADE
-)
+);
 
  
  --table Discussionforums
@@ -115,9 +114,10 @@ CREATE TABLE Assessment (
     Type VARCHAR (100) ,
     Title VARCHAR (50),
     description VARCHAR (1000),
-    FOREIGN KEY (CourseID)REFERENCES course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
-    FOREIGN KEY (ModuleID)REFERENCES Module (ModuleID) ON DELETE CASCADE ON UPDATE CASCADE, 
+    FOREIGN KEY (CourseID)REFERENCES course(CourseID) ,  
+    FOREIGN KEY (ModuleID)REFERENCES Module (ModuleID) , 
 );
+DROP TABLE Assessment;
 
 -- Table for storing modules within a course
 CREATE TABLE Module (
@@ -128,27 +128,28 @@ CREATE TABLE Module (
     contentURL VARCHAR (1000),
         PRIMARY KEY (ModuleID, CourseID),
 
-    FOREIGN KEY (CourseID)REFERENCES Course(CourseID) ON DELETE CASCADE ON UPDATE CASCADE,  
+    FOREIGN KEY (CourseID)REFERENCES Course(CourseID) ,  
 
 );
-
+DROP TABLE Module
 --multivalued Attribute in Module
 CREATE TABLE Target_traits (
     ModuleID INT,
     CourseID INT,
     Trait VARCHAR(50),
     PRIMARY KEY (ModuleID, CourseID, Trait),
-    FOREIGN KEY (ModuleID) REFERENCES Modules(ModuleID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID)  ,
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID) 
 );
+DROP TABLE Target_traits
 --multivalued Attribute in Module
 CREATE TABLE ModuleContent (
     ModuleID INT,
     CourseID INT,
     content_type VARCHAR(50),
     PRIMARY KEY (ModuleID, CourseID, content_type),
-    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID),
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)
 );
 
 
@@ -192,8 +193,8 @@ CREATE TABLE ContentLibrary (
     metadata VARCHAR(255),
     type VARCHAR(50),
     content_URL VARCHAR(255),
-    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID) ,
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID) 
 );
 -- Creating Learning_activities Table
 CREATE TABLE Learning_activities (
@@ -203,8 +204,8 @@ CREATE TABLE Learning_activities (
     activity_type VARCHAR(50),
     instruction_details VARCHAR(255),
     Max_points INT,
-    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (ModuleID) REFERENCES Module(ModuleID)  ,
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  
 );
 
 -- Creating Learning_path Table
@@ -215,7 +216,7 @@ CREATE TABLE Learning_path (
     completion_status VARCHAR(50),
     custom_content VARCHAR(255),
     adaptive_rules VARCHAR(255),
-    FOREIGN KEY (LearnerID, ProfileID) REFERENCES PersonalizationProfiles(LearnerID, ProfileID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (LearnerID, ProfileID) REFERENCES PersonalizationProfiles(LearnerID, ProfileID)  
 );
 
 
@@ -228,8 +229,8 @@ CREATE TABLE Interaction_log (
     Duration TIME,
     Timestamp TIMESTAMP,
     action_type VARCHAR(50),
-    FOREIGN KEY (activity_ID) REFERENCES Learning_activities(ActivityID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (activity_ID) REFERENCES Learning_activities(ActivityID)  ,
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  
 );
 -- Creating Instructor Table
 CREATE TABLE Instructor (
@@ -289,9 +290,9 @@ CREATE TABLE Ranking (
     rank INT,
     total_points INT,
     PRIMARY KEY (LeaderboardID, LearnerID, CourseID),
-    FOREIGN KEY (LeaderboardID) REFERENCES Leaderboard(LeaderboardID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (LeaderboardID) REFERENCES Leaderboard(LeaderboardID)  ,
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ,
+    FOREIGN KEY (CourseID) REFERENCES Course(CourseID) 
 );
 
 
@@ -344,11 +345,12 @@ CREATE TABLE FilledSurvey (
 
 --Notifications Table 
 CREATE TABLE Notification (
-    ID INT PRIMARY KEY,
+    NotificationID INT PRIMARY KEY,
     timestamp TIMESTAMP,
     message VARCHAR(255),
     urgency_level VARCHAR(50)
 );
+DROP TABLE Notification
 --many-2-many relation between notification and learners
 CREATE TABLE ReceivedNotification (
     NotificationID INT,
@@ -392,18 +394,18 @@ CREATE TABLE Collaborative (
     LearnerID INT,
     deadline INT,
     Max_num_participants INT,
-    PRIMARY KEY (QuestID, LearnerID),
+    PRIMARY KEY (QuestID, LearnerID,deadline,Max_num_participants),
     FOREIGN KEY (QuestID) REFERENCES Quest(QuestID),
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  
 );
+DROP TABle Collaborative
 --many-2-many relationship between Collaborative and Learner
 CREATE TABLE Joins(
     LearnerID INT,
     deadline INT,
     Max_num_participants INT,
     FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID),
-    FOREIGN KEY (deadline) REFERENCES Collaborative(deadline)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (Max_num_participants) REFERENCES Collaborative(Max_num_participants)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (Max_num_participants) REFERENCES Collaborative(Max_num_participants)  
 
 );
 --skill_mastery table
@@ -412,8 +414,8 @@ CREATE TABLE skill_Mastery(
     LearnerID INT,
 
     PRIMARY KEY (QuestID, LearnerID),
-    FOREIGN KEY (QuestID) REFERENCES Quest(QuestID)  ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (QuestID) REFERENCES Quest(QuestID)  ,
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  
 );
 
 --multivalued attribute in skill mastery
@@ -421,7 +423,7 @@ CREATE TABLE skill_Mastery(
     LearnerID INT,
     Skills VARCHAR(255),
     PRIMARY KEY (LearnerID, Skills),
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  
 );
 
 
