@@ -399,7 +399,9 @@ CREATE TABLE Collaborative (
     FOREIGN KEY (QuestID) REFERENCES Quest(QuestID),
     FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)  
 );
-DROP TABle Collaborative
+DROP TABLE Collaborative
+
+/*
 --many-2-many relationship between Collaborative and Learner
 CREATE TABLE Joins(
     LearnerID INT,
@@ -409,6 +411,8 @@ CREATE TABLE Joins(
     FOREIGN KEY (Max_num_participants) REFERENCES Collaborative(Max_num_participants)  
 
 );
+*/
+DROP TABLE Joins
 --skill_mastery table
 CREATE TABLE skill_Mastery(
     QuestID INT,
@@ -428,7 +432,7 @@ CREATE TABLE skill_Mastery(
 );
 
 
-
+/*
 --many-2-many relationship between Skill_mastery and Learner
 CREATE TABLE Joins (
     LearnerID INT,
@@ -439,7 +443,8 @@ CREATE TABLE Joins (
     FOREIGN KEY (LearnerID, Skills) REFERENCES Skill_Mastery_Skill (LearnerID, Skills)  ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (CourseID) REFERENCES Course(CourseID)  ON DELETE CASCADE ON UPDATE CASCADE
 );
-
+*/
+DROP TABLE Joins
 
 --Disjoint between Skill_Mastery and Collaborative
 GO
