@@ -1,8 +1,7 @@
-﻿CREATE DATABASE GamifiedEduPlatform;
+﻿CREATE DATABASE GENGO;
 
-USE GamifiedEduPlatform;
---
---Retrieve all the information for any student using their ID
+USE GENGO;
+
 GO
 CREATE PROCEDURE ViewInfo(
 @LearnerID INT
@@ -13,10 +12,8 @@ SELECT * FROM Learner
 WHERE LearnerID = @LearnerID;
 END;
 DROP PROCEDURE ViewInfo;
-GO
 EXEC ViewInfo @LearnerID = 1;
 
---Retrieve all the information from all the profiles of a certain learner
 GO
 CREATE PROCEDURE LearnerInfo(@LearnerID INT)
 AS
@@ -27,7 +24,6 @@ END;
 DROP PROCEDURE LearnerInfo
 EXEC LearnerInfo @LearnerID = 1;
 
---Retrieve the latest emotional state of a learner
 GO
 CREATE PROCEDURE EmotionalState
 @LearnerID INT
@@ -43,7 +39,6 @@ EXEC EmotionalState @LearnerID = 1;
 
 
 
--- 4) View the latest interaction logs for a certain Learner
 GO
 CREATE PROCEDURE LogDetails (@LearnerID INT)
 AS
@@ -55,7 +50,6 @@ BEGIN
     DROP PROC LogDetails
 EXEC LogDetails @LearnerID = 1;
 
-    --View all the Emotional feedbacks that a certain Instructor reviewed
     GO
 CREATE PROCEDURE InstructorReview (
 @InstructorID INT
@@ -69,8 +63,6 @@ END;
 exec InstructorReview @InstructorID = 1
 DROP PROCEDURE InstructorReview
 
-
---Delete a course from the database when it's no longer being taught
 GO
 CREATE PROCEDURE CourseRemove (@CourseID INT)
 AS
@@ -81,767 +73,1225 @@ END;
 DROP PROC CourseRemove
 
 EXEC CourseRemove @CourseID = 1
---FEHA MOSHKLA
 
 
---View the assessment with the highest Maximum points for each course
-GO
-CREATE PROCEDURE HighestGrade
+    GO
+    CREATE PROCEDURE Highestgrade
 AS
-  BEGIN 
-    SELECT CourseID, MAX(total_marks) AS HighestPoints 
-    FROM Assessment
-    GROUP BY CourseID;
-    END;
-    DROP PROC HighestGrade
+BEGIN
+    SELECT a.CourseID, a.AssessmentID, a.Total_Marks
+    FROM Assessment a
+    WHERE a.Total_Marks = (
+        SELECT MAX(Total_Marks)
+        FROM Assessment
+        WHERE CourseID = a.CourseID
+    );
+END;
     exec HighestGrade 
+        DROP PROC HighestGrade
+       
 
---View all the courses taught by more than one instructor
+
+
+
+
 GO
 CREATE PROCEDURE InstructorCount
 AS
-BEGIN 
-    SELECT CourseID, COUNT(InstructorID) AS IntsructorCount
-    FROM CourseInstructors
-    GROUP BY CourseID
-    HAVING COUNT(InstructorID) > 1;
-    END;
+BEGIN
+    SELECT t.CourseID, COUNT(t.InstructorID) AS InstructorCount
+    FROM Teaches t
+    GROUP BY t.CourseID
+    HAVING COUNT(t.InstructorID) > 1; -- Only show courses with more than one instructor
+END;
+    DROP PROC InstructorCount
     EXEC InstructorCount
 
 
 
 
- --View all the notifications sent to a certain Learner
- GO
-CREATE PROCEDURE ViewNot(
-@LearnerID INT
-)
+GO
+CREATE PROCEDURE ViewNot
+    @LearnerID INT
 AS
 BEGIN 
-    SELECT * FROM Notification
-    WHERE LearnerID = @LearnerID;
-    END;
-    GO
+    SELECT 
+        n.NotificationID, 
+        n.timestamp, 
+        n.message, 
+        n.urgency_level
+    FROM 
+        ReceivedNotification rn
+    INNER JOIN 
+        Notification n ON rn.NotificationID = n.NotificationID
+    WHERE 
+        rn.LearnerID = @LearnerID;
+END;
+EXEC ViewNot @LearnerID = 1;
+    DROP PROCEDURE ViewNot
 
-    --Create a new discussion forum for a given module
-    GO
-    CREATE PROCEDURE CreateDiscussion(@ModuleID INT, @CourseID INT, @Title VARCHAR(50), @Description VARCHAR(50))
-    AS 
-    BEGIN
-        INSERT INTO DiscussionForums (ModuleID, CourseID, Title, Description)
-        VALUES (@ModuleID, @CourseID, @Title, @Description);
-        END;
-        GO
-   --Remove a certain badge from the database
+GO
+CREATE PROCEDURE CreateDiscussion 
+    @ModuleID INT, 
+    @CourseID INT, 
+    @Title VARCHAR(50), 
+    @Description VARCHAR(50)
+
+AS 
+BEGIN
+    INSERT INTO Discussion_forum ( ModuleID, CourseID, Title, Description)
+    VALUES ( @ModuleID, @CourseID, @Title, @Description );
+END;
+DROP PROCEDURE CreateDiscussion
+EXEC CreateDiscussion @ModuleID = 1, @CourseID = 103, @Title = 'Discussion 1', @Description = 'Discuss the module content';
+   
+   
+   
+ 
+   GO
 CREATE PROCEDURE RemoveBadge(
 @BadgeID INT
 )
 AS
 BEGIN
-    DELETE FROM Badges WHERE BadgeID = @BadgeID;
+    DELETE FROM Badge WHERE BadgeID = @BadgeID;
 END;
+DROP PROCEDURE RemoveBadge
+EXEC RemoveBadge @BadgeID = 2;
+SELECT * FROM Badge;
 
---Delete all the available quests that belong to a certain criterion
+
+
+
 GO
 CREATE PROCEDURE CriteriaDelete(@Criteria VARCHAR(50))
 AS
 BEGIN
-    DELETE FROM Quests WHERE Criteria = @Criteria;
+    DELETE FROM Quest WHERE Criteria = @Criteria;
 END;
+EXEC CriteriaDelete @Criteria = 'Complete 5 activities';
+DROP PROCEDURE CriteriaDelete
+SELECT * FROM Quest;
+
+
+
+
+
 GO
---Mark notifications as read or delete them
 CREATE PROCEDURE NotificationUpdate
-(@LearnerID INT, 
-@NotificationID INT, 
-@ReadStatus BIT
-)
+    @LearnerID INT, 
+    @NotificationID INT, 
+    @ReadStatus BIT
 AS
 BEGIN
-    UPDATE Notifications SET ReadStatus = @ReadStatus WHERE LearnerID = @LearnerID AND NotificationID = @NotificationID;
+   
+    UPDATE ReceivedNotification
+    SET ReadStatus = @ReadStatus
+    WHERE LearnerID = @LearnerID AND NotificationID = @NotificationID;
 END;
 
---View emotional feedback trends over time for each learner
+EXEC NotificationUpdate @LearnerID = 1, @NotificationID = 1, @ReadStatus = 1;
+SELECT * FROM ReceivedNotification
+DROP PROCEDURE NotificationUpdate
+
+
+
 GO
 CREATE PROCEDURE EmotionalTrendAnalysis
-@CourseID INT, 
-@ModuleID INT,
-@TimePeriod VARCHAR(50)
-
+    @CourseID INT,
+    @ModuleID INT,
+    @TimePeriod DATETIME
 AS
 BEGIN
-    SELECT LearnerID, EmotionalState, COUNT(*) 
-    AS FeedbackCount 
-    FROM LearnerEmotions
-    WHERE CourseID = @CourseID AND ModuleID = @ModuleID AND Timestamp > DATEADD(MONTH, -CAST(@TimePeriod AS INT), GETDATE())
-    GROUP BY LearnerID, EmotionalState;
+    SELECT 
+        ef.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName,
+        ef.timestamp,
+        ef.emotionalState AS emotional_state,
+        la.activity_type,
+        la.instruction_details
+    FROM 
+        EmotionalFeedback ef
+    INNER JOIN 
+        Learner l
+        ON ef.LearnerID = l.LearnerID
+    INNER JOIN 
+        Learning_activities la
+        ON l.LearnerID = la.ModuleID 
+    INNER JOIN 
+        Module m
+        ON la.ModuleID = m.ModuleID AND la.CourseID = m.CourseID
+    WHERE 
+        m.CourseID = @CourseID
+        AND m.ModuleID = @ModuleID
+        AND ef.timestamp >= @TimePeriod
+    ORDER BY 
+        ef.LearnerID, ef.timestamp;
 END;
 
+EXEC EmotionalTrendAnalysis @CourseID = 102, @ModuleID = 1, @TimePeriod = '2024-11-01';
 
---Update my profile with new details
-GO
-CREATE PROCEDURE ProfileUpdate(@LearnerID INT, @ProfileID INT, @PreferredContentType VARCHAR(50), @EmotionalState VARCHAR(50), @PersonalityType VARCHAR(50))
+
+
+
+
+go
+CREATE PROCEDURE ProfileUpdate
+    @LearnerID INT,
+    @ProfileID INT,
+    @PreferedContentType VARCHAR(50),
+    @emotional_state VARCHAR(50),
+    @PersonalityType VARCHAR(50)
 AS
 BEGIN
-    UPDATE LearnerProfiles SET PreferredContentType = @PreferredContentType, EmotionalState = @EmotionalState, PersonalityType = @PersonalityType WHERE LearnerID = @LearnerID AND ProfileID = @ProfileID;
+    UPDATE PersonalizationProfiles
+    SET 
+        prefered_content_type = @PreferedContentType,
+        emotional_state = @emotional_state,
+        personality_type = @PersonalityType
+    WHERE 
+        LearnerID = @LearnerID AND ProfileID = @ProfileID;
+END;
+SELECT * FROM PersonalizationProfiles
+EXEC ProfileUpdate @LearnerID = 1, @ProfileID = 1, 
+                   @PreferedContentType = 'Interactive Video', 
+                   @emotional_state = 'Motivated', 
+                   @PersonalityType = 'Introverted';
+
+
+
+go
+CREATE PROCEDURE TotalPoints
+    @LearnerID INT,
+    @RewardType VARCHAR(50)
+AS
+BEGIN
+    SELECT 
+        SUM(r.value) AS TotalPoints
+    FROM 
+        Reward r
+    INNER JOIN 
+        QuestReward qr
+        ON r.RewardID = qr.RewardID
+    WHERE 
+        qr.LearnerID = @LearnerID
+        AND r.type = @RewardType;
 END;
 
---Calculate the total points I earned from the rewards
-GO
-CREATE PROCEDURE TotalPoints(@LearnerID INT, @RewardType VARCHAR(50))
-AS
-BEGIN
-    SELECT SUM(Points) AS TotalPoints FROM Rewards WHERE LearnerID = @LearnerID AND RewardType = @RewardType;
-END;
+EXEC TotalPoints @LearnerID = 1, @RewardType = 'Voucher';
 
---Display all the courses I am currently enrolled in
-GO
-CREATE PROCEDURE EnrolledCourses(@LearnerID INT)
-AS
-BEGIN
-    SELECT * FROM Courses WHERE LearnerID = @LearnerID;
-END;
 
---Check if I have completed all the prerequisites for a certain course
-GO
-CREATE PROCEDURE Prerequisites(@LearnerID INT, @CourseID INT)
+
+
+go
+CREATE PROCEDURE EnrolledCourses
+    @LearnerID INT
 AS
 BEGIN
-    IF NOT EXISTS (SELECT * FROM Prerequisites WHERE LearnerID = @LearnerID AND CourseID = @CourseID)
-        PRINT 'Prerequisites not completed';
+    SELECT 
+        ce.CourseID,
+        c.Title AS CourseTitle,
+        ce.enrollment_date,
+        ce.completion_date,
+        ce.status
+    FROM 
+        Course_enrollment ce
+    INNER JOIN 
+        Course c
+        ON ce.CourseID = c.CourseID
+    WHERE 
+        ce.LearnerID = @LearnerID
+        AND ce.status != 'Completed'; 
+END;
+DROP PROCEDURE EnrolledCourses
+EXEC EnrolledCourses @LearnerID = 1;
+
+
+
+
+
+
+go
+CREATE PROCEDURE Prerequisites
+    @LearnerID INT,
+    @CourseID INT
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM CoursePrerequisite cp
+        LEFT JOIN Course_enrollment ce
+        ON cp.Prereq = ce.CourseID AND ce.LearnerID = @LearnerID AND ce.status = 'Completed'
+        WHERE cp.CourseID = @CourseID AND ce.CourseID IS NULL
+    )
+    BEGIN
+        PRINT 'Not all prerequisites are completed.';
+    END
     ELSE
-        PRINT 'Prerequisites completed';
+    BEGIN
+        PRINT 'All prerequisites are completed.';
+    END
 END;
+DROP PROCEDURE Prerequisites
+EXEC Prerequisites @LearnerID = 1, @CourseID = 102;
+SELECT * FROM CoursePrerequisite;
 
 
---View all the Modules for a certain course that trains certain traits I specify
-GO
-CREATE PROCEDURE ModuleTraits(@TargetTrait VARCHAR(50), @CourseID INT)
+
+go
+CREATE PROCEDURE Moduletraits
+    @TargetTrait VARCHAR(50),
+    @CourseID INT
 AS
 BEGIN
-    SELECT * FROM Modules WHERE CourseID = @CourseID AND Traits LIKE '%' + @TargetTrait + '%';
+    SELECT 
+        m.ModuleID,
+        m.Title AS ModuleTitle,
+        m.difficulty_Level,
+        m.contentURL
+    FROM 
+        Module m
+    INNER JOIN 
+        Target_traits tt
+        ON m.ModuleID = tt.ModuleID AND m.CourseID = tt.CourseID
+    WHERE 
+        tt.Trait = @TargetTrait
+        AND m.CourseID = @CourseID;
 END;
+EXEC Moduletraits @TargetTrait = 'Critical Thinking', @CourseID = 104;
 
---View All the participants in a leaderboard and their ranking
-GO
-CREATE PROCEDURE LeaderboardRank(@LeaderboardID INT)
+
+go
+CREATE PROCEDURE LeaderboardRank
+    @LeaderboardID INT
 AS
 BEGIN
-    SELECT LearnerID, Rank FROM Leaderboards WHERE LeaderboardID = @LeaderboardID;
+    SELECT 
+        r.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName,
+        r.rank,
+        r.total_points
+    FROM 
+        Ranking r
+    INNER JOIN 
+        Learner l
+        ON r.LearnerID = l.LearnerID
+    WHERE 
+        r.LeaderboardID = @LeaderboardID
+    ORDER BY 
+        r.rank ASC;
 END;
+EXEC LeaderboardRank @LeaderboardID = 2;
 
---Submit an emotional feedback to a certain activity
-GO
-CREATE PROCEDURE ViewMyDeviceCharge(@ActivityID INT, @LearnerID INT, @Timestamp DATETIME, @EmotionalState VARCHAR(50))
+
+
+
+go
+CREATE PROCEDURE ActivityEmotionalFeedback
+    @ActivityID INT,
+    @LearnerID INT,
+    @timestamp DATETIME,
+    @emotionalstate VARCHAR(50)
 AS
 BEGIN
-    INSERT INTO EmotionalFeedbacks (ActivityID, LearnerID, Timestamp, EmotionalState) VALUES (@ActivityID, @LearnerID, @Timestamp, @EmotionalState);
+    INSERT INTO EmotionalFeedback (LearnerID, activityId, timestamp, emotionalState)
+    VALUES (@LearnerID, @ActivityID, @timestamp, @emotionalstate);
 END;
+DROP PROCEDURE ActivityEmotionalFeedback
+EXEC ActivityEmotionalFeedback @ActivityID = 2, @LearnerID = 1, @timestamp = '2024-11-25 14:00:00', @emotionalstate = 'Excited';
+SELECT * FROM EmotionalFeedback;
 
---Join a collaborative quest if space is available
+
+
 GO
-CREATE PROCEDURE JoinQuest(@LearnerID INT, @QuestID INT)
+CREATE PROCEDURE JoinQuest
+    @LearnerID INT,
+    @QuestID INT
 AS
 BEGIN
-    DECLARE @MaxParticipants INT, @CurrentParticipants INT;
-    SELECT @MaxParticipants = MaxParticipants, @CurrentParticipants = (SELECT COUNT(*) FROM QuestParticipants WHERE QuestID = @QuestID) FROM Quests WHERE QuestID = @QuestID;
+    DECLARE @CurrentParticipants INT;
+    DECLARE @MaxParticipants INT;
+    DECLARE @Deadline DATE;
+
+    SELECT 
+        @CurrentParticipants = COUNT(*)
+    FROM 
+        Collaborative
+    WHERE 
+        QuestID = @QuestID;
+
+    SELECT 
+        @MaxParticipants = Max_num_participants,
+        @Deadline = deadline
+    FROM 
+        Collaborative
+    WHERE 
+        QuestID = @QuestID;
 
     IF @CurrentParticipants < @MaxParticipants
     BEGIN
-        INSERT INTO QuestParticipants (LearnerID, QuestID) VALUES (@LearnerID, @QuestID);
-        PRINT 'Joined the quest successfully';
+        INSERT INTO Collaborative (QuestID, LearnerID, deadline, Max_num_participants)
+        VALUES (@QuestID, @LearnerID, @Deadline, @MaxParticipants);
+
+        PRINT 'You have successfully joined the quest.';
     END
     ELSE
     BEGIN
-        PRINT 'Quest is full';
-    END;
+        PRINT 'Quest is full. Unable to join.';
+    END
 END;
+EXEC JoinQuest @LearnerID = 1, @QuestID = 2;
 
---View my skills proficiency level
-GO
-CREATE PROCEDURE SkillsProficiency(@LearnerID INT)
+
+
+
+
+
+go
+CREATE PROCEDURE SkillsProfeciency
+    @LearnerID INT
 AS
 BEGIN
-    SELECT Skill, ProficiencyLevel FROM LearnerSkills WHERE LearnerID = @LearnerID;
+    SELECT 
+        sp.skill_name AS Skill,
+        sp.proficiency_level AS ProficiencyLevel,
+        sp.timestamp AS LastUpdated
+    FROM 
+        SkillProgression sp
+    WHERE 
+        sp.LearnerID = @LearnerID
+    ORDER BY 
+        sp.timestamp DESC; 
 END;
+SELECT * FROM SkillProgression
 
---View my score for a certain assessment
-GO
-CREATE PROCEDURE ViewScore(@LearnerID INT, @AssessmentID INT)
+EXEC SkillsProfeciency @LearnerID = 1;
+
+
+go
+CREATE PROCEDURE Viewscore
+    @LearnerID INT,
+    @AssessmentID INT,
+    @score INT OUTPUT
 AS
 BEGIN
-    SELECT Score
-    FROM Assessments
-    WHERE LearnerID = @LearnerID AND AssessmentID = @AssessmentID;
+    SELECT 
+        @score = ScoredPoint
+    FROM 
+        Takenassessment
+    WHERE 
+        LearnerID = @LearnerID AND AssessmentID = @AssessmentID;
+
+    IF @score IS NULL
+        PRINT 'No score found for the given assessment and learner.';
 END;
 
---View all the assessments I took and its grades for a certain module
-GO
-CREATE PROCEDURE AssessmentsList(@CourseID INT, @ModuleID INT)
+DECLARE @score INT;
+EXEC Viewscore @LearnerID = 1, @AssessmentID = 1, @score = @score OUTPUT;
+PRINT @score;
+
+
+go
+CREATE PROCEDURE AssessmentsList
+    @CourseID INT,
+    @ModuleID INT,
+    @LearnerID INT
 AS
 BEGIN
-    SELECT * FROM Assessments WHERE CourseID = @CourseID AND ModuleID = @ModuleID;
+    SELECT 
+        a.AssessmentID AS AssessmentID,
+        a.title AS AssessmentTitle,
+        ta.ScoredPoint AS Grade,
+        a.total_marks AS TotalMarks,
+        a.passing_marks AS PassingMarks
+    FROM 
+        Assessment a
+    INNER JOIN 
+        Takenassessment ta
+        ON a.AssessmentID = ta.AssessmentID
+    WHERE 
+        a.CourseID = @CourseID AND a.ModuleID = @ModuleID AND ta.LearnerID = @LearnerID;
 END;
+EXEC AssessmentsList @CourseID = 103, @ModuleID = 1, @LearnerID = 1;
 
 
 
---Register in any course I want as long as I completed its prerequisites
-GO
-CREATE PROCEDURE CourseRegister(@LearnerID INT, @CourseID INT)
+
+
+go
+CREATE PROCEDURE Courseregister
+    @LearnerID INT,
+    @CourseID INT
 AS
 BEGIN
-    IF EXISTS (SELECT * FROM Prerequisites WHERE LearnerID = @LearnerID AND CourseID = @CourseID)
+    IF EXISTS (
+        SELECT 1
+        FROM CoursePrerequisite cp
+        LEFT JOIN Course_enrollment ce
+        ON cp.Prereq = ce.CourseID AND ce.LearnerID = @LearnerID AND ce.status = 'Completed'
+        WHERE cp.CourseID = @CourseID AND ce.CourseID IS NULL
+    )
     BEGIN
-        INSERT INTO Enrollments (LearnerID, CourseID) VALUES (@LearnerID, @CourseID);
-        PRINT 'Registration successful';
+        PRINT 'Prerequisites not completed. Registration rejected.';
     END
     ELSE
     BEGIN
-        PRINT 'Prerequisites not completed';
-    END;
+        INSERT INTO Course_enrollment (EnrollmentID, CourseID, LearnerID, enrollment_date, status)
+        VALUES ((SELECT COALESCE(MAX(EnrollmentID), 0) + 1 FROM Course_enrollment), 
+                @CourseID, @LearnerID, GETDATE(), 'Not Started');
+        PRINT 'Registration approved.';
+    END
 END;
 
-GO
-/*
-GO
+EXEC Courseregister @LearnerID = 1, @CourseID = 103;
+
+
+
+
+
+go
 CREATE PROCEDURE Post
-@LearnerID INT,
-@DiscussionID INT,
-@PostContent VARCHAR(MAX)
+    @LearnerID INT,
+    @DiscussionID INT,
+    @PostContent VARCHAR(MAX)
 AS
 BEGIN
-INSERT INTO Posts (LearnerID, DiscussionID, PostContent, PostDate)
-VALUES (@LearnerID, @DiscussionID, @PostContent, GETDATE());
+    INSERT INTO LearnerDiscussion (ForumID, LearnerID, Post, time)
+    VALUES (@DiscussionID, @LearnerID, @PostContent, GETDATE());
 END;
-GO
+
+EXEC Post @LearnerID = 1, @DiscussionID = 1, 
+          @PostContent = 'This is a helpful discussion on programming basics.';
+
+
+
+
+go
 CREATE PROCEDURE AddGoal
-@LearnerID INT,
-@GoalID INT
+    @LearnerID INT,
+    @GoalID INT
 AS
 BEGIN
-INSERT INTO LearnerGoals (LearnerID, GoalID, AddedDate)
-VALUES (@LearnerID, @GoalID, GETDATE());
+    INSERT INTO LearnersGoals (GoalID, LearnerID)
+    VALUES (@GoalID, @LearnerID);
 END;
 
+EXEC AddGoal @LearnerID = 1, @GoalID = 3;
 
-GO
+
+
+
+
+go
 CREATE PROCEDURE CurrentPath
-@LearnerID INT
+    @LearnerID INT
 AS
 BEGIN
-SELECT
-LearningPaths.PathID,
-LearningPaths.PathName,
-LearnerStatus.Status,
-LearnerStatus.LastUpdated
-FROM
-LearningPaths
-INNER JOIN
-LearnerStatus ON LearningPaths.PathID = LearnerStatus.PathID
-WHERE
-LearnerStatus.LearnerID = @LearnerID;
+    SELECT 
+        lp.pathID AS PathID,
+        pp.ProfileID,
+        pp.prefered_content_type AS ContentPreference,
+        lp.completion_status AS Status,
+        lp.custom_content AS CustomContent,
+        lp.adaptive_rules AS AdaptiveRules
+    FROM 
+        Learning_path lp
+    INNER JOIN 
+        PersonalizationProfiles pp
+        ON lp.LearnerID = pp.LearnerID AND lp.ProfileID = pp.ProfileID
+    WHERE 
+        lp.LearnerID = @LearnerID;
 END;
 
-GO
+EXEC CurrentPath @LearnerID = 1;
+
+
+
+
+go
 CREATE PROCEDURE QuestMembers
-@LearnerID INT
+    @LearnerID INT
 AS
 BEGIN
-SELECT
-Quests.QuestID,
-Quests.QuestName,
-QuestParticipants.LearnerID AS MemberID,
-Learners.LearnerName AS MemberName
-FROM
-Quests
-INNER JOIN
-QuestParticipants ON Quests.QuestID = QuestParticipants.QuestID
-INNER JOIN
-QuestParticipants AS Members ON Quests.QuestID = Members.QuestID
-INNER JOIN
-Learners ON Members.LearnerID = Learners.LearnerID
-WHERE
-QuestParticipants.LearnerID = @LearnerID
-AND Quests.Deadline > GETDATE();
+    SELECT 
+        lc.QuestID,
+        l.LearnerID,
+        l.first_name + ' ' + l.last_name AS MemberName,
+        cq.deadline
+    FROM 
+        Collaborative lc
+    INNER JOIN 
+        Collaborative my_quests
+        ON lc.QuestID = my_quests.QuestID
+    INNER JOIN 
+        Collaborative cq
+        ON lc.QuestID = cq.QuestID
+    INNER JOIN 
+        Learner l
+        ON lc.LearnerID = l.LearnerID
+    WHERE 
+        my_quests.LearnerID = @LearnerID
+        AND cq.deadline >= GETDATE();
 END;
 
-GO
+EXEC QuestMembers @LearnerID = 1;
+
+
+go
 CREATE PROCEDURE QuestProgress
-@LearnerID INT,
-@QuestID INT
+    @LearnerID INT
 AS
 BEGIN
-SELECT
-Quests.QuestID,
-Quests.QuestName,
-LearnerStatus.Status AS QuestStatus,
-LearnerStatus.CompletionDate AS QuestCompletionDate,
-Badges.BadgeID,
-Badges.BadgeName,
-LearnerBadges.Status AS BadgeStatus,
-LearnerBadges.DateEarned AS BadgeDateEarned
-FROM
-Quests
-INNER JOIN
-LearnerStatus ON Quests.QuestID = LearnerStatus.QuestID
-LEFT JOIN
-LearnerBadges ON LearnerStatus.LearnerID = LearnerBadges.LearnerID
-AND LearnerBadges.BadgeID IN (SELECT BadgeID FROM QuestBadges
-WHERE QuestID = @QuestID)
-LEFT JOIN
-Badges ON LearnerBadges.BadgeID = Badges.BadgeID
-WHERE
-LearnerStatus.LearnerID = @LearnerID
-AND Quests.QuestID = @QuestID
-AND Quests.Deadline > GETDATE();
+    SELECT 
+        q.QuestID,
+        q.title AS QuestTitle,
+        lm.CompletionStatus AS QuestStatus,
+        b.BadgeID,
+        b.title AS BadgeTitle,
+        a.date_earned AS BadgeEarnedDate
+    FROM 
+        Quest q
+    LEFT JOIN 
+        LearnersMastery lm
+        ON q.QuestID = lm.QuestID AND lm.LearnerID = @LearnerID
+    LEFT JOIN 
+        Achievement a
+        ON a.LearnerID = @LearnerID
+    LEFT JOIN 
+        Badge b
+        ON a.BadgeID = b.BadgeID
+    WHERE 
+        lm.CompletionStatus IS NOT NULL OR a.BadgeID IS NOT NULL;
 END;
 
+ eXEC QuestProgress @LearnerID = 120;
 
-
-GO
-CREATE PROCEDURE GoalReminder
-@LearnerID INT,
-@GoalID INT
+go
+ CREATE PROCEDURE GoalReminder
+    @LearnerID INT
 AS
 BEGIN
-DECLARE @GoalDeadline DATETIME;
-DECLARE @GoalProgress DATETIME;
-DECLARE @NotificationMessage NVARCHAR(MAX);
-SELECT
-@GoalDeadline = LearningGoals.DueDate,
-@GoalProgress = LearnerGoals.ProgressDate
-FROM
-LearningGoals
-INNER JOIN
-LearnerGoals ON LearningGoals.GoalID = LearnerGoals.GoalID
-WHERE
-LearningGoals.GoalID = @GoalID
-AND LearnerGoals.LearnerID = @LearnerID;
-IF @GoalProgress IS NULL OR @GoalProgress < @GoalDeadline
-BEGIN
-SET @NotificationMessage = 'Reminder: You are behind on your goal "' +
-(SELECT GoalName FROM LearningGoals WHERE GoalID
-= @GoalID) +
-'". Your goal deadline is ' + CONVERT(NVARCHAR,
-@GoalDeadline, 101) +
-'. Please catch up on your progress.';
-SELECT @NotificationMessage AS ReminderMessage;
-END
-ELSE
-BEGIN
--- No reminder needed
-SET @NotificationMessage = 'You are on track with your goal "' +
-(SELECT GoalName FROM LearningGoals WHERE GoalID
-= @GoalID) +
-'". Keep up the good work!';
-SELECT @NotificationMessage AS ReminderMessage;
-END
+    SELECT 
+        lg.ID AS GoalID,
+        lg.description AS GoalDescription,
+        lg.deadline,
+        CASE 
+            WHEN GETDATE() > lg.deadline THEN 'Overdue'
+            ELSE 'On Track'
+        END AS Status
+    FROM 
+        Learning_goal lg
+    INNER JOIN 
+        LearnersGoals lgp
+        ON lg.ID = lgp.GoalID
+    WHERE 
+        lgp.LearnerID = @LearnerID;
+
+    IF EXISTS (
+        SELECT 1 
+        FROM Learning_goal lg
+        INNER JOIN LearnersGoals lgp
+        ON lg.ID = lgp.GoalID
+        WHERE lgp.LearnerID = @LearnerID AND GETDATE() > lg.deadline
+    )
+    BEGIN
+        PRINT 'Reminder: You have goals that are overdue. Please review your learning goals timeline.';
+    END;
+END;
+
+exec GoalReminder @LearnerID = 1;
 
 
-GO
+
+
+
+go
 CREATE PROCEDURE SkillProgressHistory
-@LearnerID INT,
-@Skill NVARCHAR(50)
+    @LearnerID INT,
+    @Skill VARCHAR(50)
 AS
 BEGIN
-SELECT
-SkillProgress.SkillID,
-SkillProgress.ProgressDate,
-SkillProgress.ProgressValue,
-Skills.SkillName
-FROM
-SkillProgress
-INNER JOIN
-Skills ON SkillProgress.SkillID = Skills.SkillID
-WHERE
-SkillProgress.LearnerID = @LearnerID
-AND Skills.SkillName = @Skill
-ORDER BY
-SkillProgress.ProgressDate ASC;
+    SELECT 
+        sp.timestamp AS Date,
+        sp.proficiency_level AS ProficiencyLevel
+    FROM 
+        SkillProgression sp
+    WHERE 
+        sp.LearnerID = @LearnerID AND sp.skill_name = @Skill
+    ORDER BY 
+        sp.timestamp ASC;
 END;
+DROP PROCEDURE SkillProgressHistory
+EXEC SkillProgressHistory @LearnerID = 1, @Skill = 'Data Analysis';
+SELECT * FROM SkillProgression;
 
 
-GO
+
+
+go
 CREATE PROCEDURE AssessmentAnalysis
-@LearnerID INT,
-@AssessmentID INT
+    @LearnerID INT
 AS
 BEGIN
-DECLARE @TotalScore INT;
-DECLARE @MaxScore INT;
-DECLARE @Percentage DECIMAL(5,2);
-DECLARE @PerformanceAnalysis NVARCHAR(255);
-SELECT
-SectionID,
-SectionName,
-Score,
-MaxScore,
-CAST(Score AS DECIMAL) / MaxScore * 100 AS SectionPercentage
-INTO #ScoreBreakdown
-FROM
-AssessmentScores
-INNER JOIN
-AssessmentSections ON AssessmentScores.SectionID =
-AssessmentSections.SectionID
-WHERE
-AssessmentScores.LearnerID = @LearnerID
-AND AssessmentScores.AssessmentID = @AssessmentID;
-SELECT
-@TotalScore = SUM(Score),
-@MaxScore = SUM(MaxScore)
-FROM
-#ScoreBreakdown;
-SET @Percentage = CAST(@TotalScore AS DECIMAL) / @MaxScore * 100;
--- Provide performance analysis
-IF @Percentage >= 90
-SET @PerformanceAnalysis = 'Excellent performance!';
-ELSE IF @Percentage >= 75
-SET @PerformanceAnalysis = 'Good performance.';
-ELSE IF @Percentage >= 50
-SET @PerformanceAnalysis = 'Average performance';
-ELSE
-SET @PerformanceAnalysis = 'Needs improvement';
-SELECT
-SectionID,
-SectionName,
-Score,
-MaxScore,
-SectionPercentage
-FROM
-#ScoreBreakdown;
-SELECT
-@PerformanceAnalysis AS PerformanceAnalysis,
-@Percentage AS OverallPercentage;
-DROP TABLE #ScoreBreakdown;
+    SELECT 
+        a.AssessmentID AS AssessmentID,
+        a.title AS AssessmentTitle,
+        ta.ScoredPoint AS Score,
+        a.total_marks AS TotalMarks,
+        a.passing_marks AS PassingMarks,
+        CASE 
+            WHEN ta.ScoredPoint >= a.passing_marks THEN 'Strength'
+            ELSE 'Weakness'
+        END AS Performance
+    FROM 
+        Assessment a
+    INNER JOIN 
+        Takenassessment ta
+        ON a.AssessmentID = ta.AssessmentID
+    WHERE 
+        ta.LearnerID = @LearnerID
+    ORDER BY 
+        ta.ScoredPoint DESC;
 END;
+EXEC AssessmentAnalysis @LearnerID = 1;
 
 
 
-GO
+
+go
 CREATE PROCEDURE LeaderboardFilter
-@LearnerID INT
+    @LearnerID INT
 AS
 BEGIN
-DECLARE @LearnerRank INT;
-SELECT
-@LearnerRank = Rank
-FROM
-Leaderboard
-WHERE
-LearnerID = @LearnerID;
-SELECT
-LearnerID,
-LearnerName,
-Score,
-Rank
-FROM
-Leaderboard
-WHERE
-Rank <= @LearnerRank
-ORDER BY
-Rank DESC;
+    SELECT 
+        r.LeaderboardID,
+        lb.season AS LeaderboardSeason,
+        r.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName,
+        r.rank,
+        r.total_points AS TotalPoints
+    FROM 
+        Ranking r
+    INNER JOIN 
+        Leaderboard lb
+        ON r.LeaderboardID = lb.LeaderboardID
+    INNER JOIN 
+        Learner l
+        ON r.LearnerID = l.LearnerID
+    WHERE 
+        r.LearnerID = @LearnerID
+    ORDER BY 
+        r.rank DESC; 
 END;
-*/
 
---View all the learners who have a certain skill
-GO
-CREATE PROCEDURE SkillLearners 
-    @Skillname VARCHAR(50)
+exec LeaderboardFilter @LearnerID = 2;
+
+
+go
+CREATE PROCEDURE SkillLearners
+    @SkillName VARCHAR(50)
 AS
 BEGIN
-    SELECT LearnerID, LearnerName
-    FROM Learners
-    WHERE Skill = @Skillname;
+    SELECT 
+        s.skill_name AS SkillName,
+        l.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName
+    FROM 
+        Skills s
+    INNER JOIN 
+        Learner l
+        ON s.LearnerID = l.LearnerID
+    WHERE 
+        s.skill_name = @SkillName;
 END;
---Add new Learning activities for a course module
-GO
+
+EXEC SkillLearners @SkillName = 'Java';
+
+
+
+go
 CREATE PROCEDURE NewActivity
-    @CourseID INT, 
-    @ModuleID INT, 
-    @activitytype VARCHAR(50), 
-    @instructiondetails VARCHAR(MAX), 
-    @maxpoints INT
+    @CourseID INT,
+    @ModuleID INT,
+    @ActivityType VARCHAR(50),
+    @InstructionDetails VARCHAR(MAX),
+    @MaxPoints INT
 AS
 BEGIN
-    INSERT INTO Activities (CourseID, ModuleID, ActivityType, InstructionDetails, MaxPoints)
-    VALUES (@CourseID, @ModuleID, @activitytype, @instructiondetails, @maxpoints);
+    INSERT INTO Learning_activities (ActivityID, ModuleID, CourseID, activity_type, instruction_details, Max_points)
+    VALUES (
+        (SELECT COALESCE(MAX(ActivityID), 0) + 1 FROM Learning_activities), 
+        @ModuleID, 
+        @CourseID, 
+        @ActivityType, 
+        @InstructionDetails, 
+        @MaxPoints
+    );
 END;
 
---Award a new achievement to a learner
-GO
+EXEC NewActivity @CourseID = 103, @ModuleID = 1, @ActivityType = 'Quiz', @InstructionDetails = 'Complete the quiz to test your knowledge.', @MaxPoints = 10;
+
+
+go
 CREATE PROCEDURE NewAchievement
-    @LearnerID INT, 
-    @BadgeID INT, 
-    @description VARCHAR(MAX), 
-    @date_earned DATE, 
-    @type VARCHAR(50)
+    @LearnerID INT,
+    @BadgeID INT,
+    @Description VARCHAR(MAX),
+    @Date_Earned DATE,
+    @Type VARCHAR(50)
 AS
 BEGIN
-    INSERT INTO Achievements (LearnerID, BadgeID, Description, DateEarned, Type)
-    VALUES (@LearnerID, @BadgeID, @description, @date_earned, @type);
+    INSERT INTO Achievement (AchievementID, LearnerID, BadgeID, description, date_earned, type)
+    VALUES (
+        (SELECT COALESCE(MAX(AchievementID), 0) + 1 FROM Achievement), 
+        @LearnerID, 
+        @BadgeID, 
+        @Description, 
+        @Date_Earned, 
+        @Type
+    );
 END;
 
---View all the learners who earned a certain badge
-GO
+EXEC NewAchievement @LearnerID = 2, 
+                    @BadgeID = 3, 
+                    @Description = 'Scored above 90% on final exam.', 
+                    @Date_Earned = '2024-12-01', 
+                    @Type = 'Exam Achievement';
+
+
+go
 CREATE PROCEDURE LearnerBadge
     @BadgeID INT
 AS
 BEGIN
-    SELECT LearnerID, LearnerName
-    FROM Learners
-    WHERE LearnerID IN (SELECT LearnerID FROM Achievements WHERE BadgeID = @BadgeID);
+    SELECT 
+        a.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName,
+        a.date_earned AS DateEarned,
+        a.description AS AchievementDescription
+    FROM 
+        Achievement a
+    INNER JOIN 
+        Learner l
+        ON a.LearnerID = l.LearnerID
+    WHERE 
+        a.BadgeID = @BadgeID;
 END;
 
---Add a new learning path for a learner
+EXEC LearnerBadge @BadgeID = 3;
+
+
+
 GO
 CREATE PROCEDURE NewPath
-    @LearnerID INT, 
-    @ProfileID INT, 
-    @completion_status VARCHAR(50), 
-    @custom_content VARCHAR(MAX), 
-    @adaptiverules VARCHAR(MAX)
+    @LearnerID INT,
+    @ProfileID INT,
+    @Completion_Status VARCHAR(50),
+    @Custom_Content VARCHAR(MAX),
+    @AdaptiveRules VARCHAR(MAX)
 AS
 BEGIN
-    INSERT INTO LearningPaths (LearnerID, ProfileID, CompletionStatus, CustomContent, AdaptiveRules)
-    VALUES (@LearnerID, @ProfileID, @completion_status, @custom_content, @adaptiverules);
-END;
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM PersonalizationProfiles 
+        WHERE LearnerID = @LearnerID AND ProfileID = @ProfileID
+    )
+    BEGIN
+        PRINT 'Error: LearnerID or ProfileID does not exist in PersonalizationProfiles.';
+        RETURN;
+    END;
 
---View all the courses that a learner took so far
-GO
+    INSERT INTO Learning_path (pathID, LearnerID, ProfileID, completion_status, custom_content, adaptive_rules)
+    VALUES (
+        (SELECT COALESCE(MAX(pathID), 0) + 1 FROM Learning_path), 
+        @LearnerID, 
+        @ProfileID, 
+        @Completion_Status, 
+        @Custom_Content, 
+        @AdaptiveRules
+    );
+
+    PRINT 'New learning path added successfully.';
+END;
+EXEC NewPath @LearnerID = 1, 
+             @ProfileID = 1, 
+             @Completion_Status = 'In Progress', 
+             @Custom_Content = 'Custom content for the learner', 
+             @AdaptiveRules = 'Adaptive rules for the learner';
+
+
+
+
+
+go
 CREATE PROCEDURE TakenCourses
     @LearnerID INT
 AS
 BEGIN
-    SELECT CourseID, CourseName
-    FROM Courses
-    WHERE CourseID IN (SELECT CourseID FROM Enrollments WHERE LearnerID = @LearnerID);
+    SELECT 
+        ce.CourseID,
+        c.Title AS CourseTitle,
+        ce.enrollment_date AS EnrollmentDate,
+        ce.completion_date AS CompletionDate,
+        ce.status AS Status
+    FROM 
+        Course_enrollment ce
+    INNER JOIN 
+        Course c
+        ON ce.CourseID = c.CourseID
+    WHERE 
+        ce.LearnerID = @LearnerID
+        AND ce.status = 'Completed'; 
 END;
+EXEC TakenCourses @LearnerID = 2;
 
---Add a new collaborative Quest
-GO
+
+
+
+go
 CREATE PROCEDURE CollaborativeQuest
-    @difficulty_level VARCHAR(50), 
-    @criteria VARCHAR(50), 
-    @description VARCHAR(50), 
-    @title VARCHAR(50), 
-    @Maxnumparticipants INT, 
+    @difficulty_level VARCHAR(50),
+    @criteria VARCHAR(50),
+    @description VARCHAR(50),
+    @title VARCHAR(50),
+    @Maxnumparticipants INT,
     @deadline DATETIME
 AS
 BEGIN
-    INSERT INTO Quests (DifficultyLevel, Criteria, Description, Title, MaxNumParticipants, Deadline)
-    VALUES (@difficulty_level, @criteria, @description, @title, @Maxnumparticipants, @deadline);
-END;
+    INSERT INTO Quest (QuestID, difficulty_level, criteria, description, title)
+    VALUES (
+        (SELECT COALESCE(MAX(QuestID), 0) + 1 FROM Quest), 
+        @difficulty_level, 
+        @criteria, 
+        @description, 
+        @title
+    );
 
-/*
---Create an inventory for a specific item
-CREATE PROCEDURE Sp_Inventory
-    @item_id INT,
-    @name VARCHAR(30),
-    @quantity INT,
-    @expirydate DATETIME,
-    @price DECIMAL(10,2),
-    @manufacturer VARCHAR(30),
-    @category VARCHAR(20)
-AS
-BEGIN
-    INSERT INTO Inventory (ItemID, ItemName, Quantity, ExpiryDate, Price, Manufacturer, Category)
-    VALUES (@item_id, @name, @quantity, @expirydate, @price, @manufacturer, @category);
+    INSERT INTO Collaborative (QuestID, deadline, max_num_participants)
+    VALUES (
+        (SELECT MAX(QuestID) FROM Quest), 
+        @deadline, 
+        @Maxnumparticipants
+    );
 END;
-*/
+DROP PROCEDURE CollaborativeQuest
+Exec CollaborativeQuest @difficulty_level = 'Intermediate', @criteria = 'Complete 5 activities', @description = 'Complete the intermediate level activities', @title = 'Intermediate Quest', @Maxnumparticipants = 5, @deadline = '2024-12-31';
 
-    --update the deadline of a quest
-    GO
+
+
+
+go
 CREATE PROCEDURE DeadlineUpdate
     @QuestID INT,
     @deadline DATETIME
 AS
 BEGIN
-    UPDATE Quests 
-    SET Deadline = @deadline
-    WHERE QuestID = @QuestID;
-END
+    UPDATE Collaborative
+    SET deadline = @deadline
+    WHERE QuestID = @QuestID;
 
--- Update an assessment grade for a learner
-GO
-CREATE PROCEDURE GradeUpdate(
-@LearnerID INT,
-@AssessmentID INT,
-@NewGrade INT
-)
-AS
-BEGIN
-UPDATE AssessmentResults
-SET Score = @NewGrade
-WHERE LearnerID = @LearnerID AND AssessmentID = @AssessmentID;
+   
 END;
 
---Send a notification to a learner about an upcoming assessment deadline
+EXEC DeadlineUpdate @QuestID = 2, @deadline = '2025-01-15';
+
+
+go
+CREATE PROCEDURE GradeUpdate
+    @LearnerID INT,
+    @AssessmentID INT,
+    @points INT
+AS
+BEGIN
+    UPDATE Takenassessment
+    SET ScoredPoint = @points
+    WHERE LearnerID = @LearnerID AND AssessmentID = @AssessmentID;
+
+    PRINT 'Grade updated successfully.';
+END;
+
+EXEC GradeUpdate @LearnerID = 3, @AssessmentID = 1, @points = 95;
+
+
+
+
 GO
 CREATE PROCEDURE AssessmentNot
     @NotificationID INT,
-    @timestamp TIMESTAMP,
     @message VARCHAR(MAX),
-    @urgencyLevel VARCHAR(50),
+    @urgencylevel VARCHAR(50),
     @LearnerID INT
 AS
 BEGIN
-    INSERT INTO Notification (ID, timestamp, message, urgency_level)
-    VALUES (@NotificationID, @timestamp, @message, @urgencyLevel);
+    INSERT INTO Notification (NotificationID, message, urgency_level)
+    VALUES (@NotificationID, @message, @urgencylevel);
 
     INSERT INTO ReceivedNotification (NotificationID, LearnerID)
     VALUES (@NotificationID, @LearnerID);
 
     PRINT 'Notification sent successfully.';
-END
-
---Define new learning goals for the learners
-GO
-CREATE PROCEDURE NewGoal(
-@GoalID INT,
-    @Status VARCHAR(MAX),
-    @Deadline DATETIME,
-    @Description VARCHAR(MAX)
-)
-AS 
-BEGIN
-INSERT INTO LearningGoals (GoalID, Status, Deadline, Description)
-    VALUES (@GoalID, @Status, @Deadline, @Description);
 END;
 
---List all the learners enrolled in the courses I teach
-GO
-CREATE PROCEDURE LearnersCoutrses(
-@CourseID INT,
-@InstructorID INT
-)
+EXEC AssessmentNot @NotificationID = 2, @message = 'New assessment available for completion.', @urgencylevel = 'High', @LearnerID = 1;
+
+
+
+
+
+go
+CREATE PROCEDURE NewGoal
+    @GoalID INT,
+    @status VARCHAR(MAX),
+    @deadline DATETIME,
+    @description VARCHAR(MAX)
 AS
 BEGIN
-SELECT LearnerID, Name
-    FROM Enrollment
-    JOIN Learner ON Enrollment.LearnerID = Learner.LearnerID
-    WHERE CourseID = CourseID AND InstructorID = InstructorID;
+    INSERT INTO Learning_goal (ID, status, deadline, description)
+    VALUES (@GoalID, @status, @deadline, @description);
 END;
+EXEC NewGoal @GoalID = 4, @status = 'In Progress', @deadline = '2025-01-31', @description = 'Complete all advanced level activities.';
 
---See the last time a discussion forum was active
-GO
-CREATE PROCEDURE LastActive(
-@ForumID INT
-)
+
+
+
+
+go
+CREATE PROCEDURE LearnersCourses
+    @CourseID INT,
+    @InstructorID INT
 AS
 BEGIN
-SELECT MAX(Timestamp) AS LastActive
-FROM ForumPosts
-WHERE DiscussionID = @ForumID;
+    SELECT 
+        ce.CourseID,
+        c.Title AS CourseTitle,
+        ce.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName,
+        ce.enrollment_date AS EnrollmentDate,
+        ce.status AS Status
+    FROM 
+        Course_enrollment ce
+    INNER JOIN 
+        Course c
+        ON ce.CourseID = c.CourseID
+    INNER JOIN 
+        Learner l
+        ON ce.LearnerID = l.LearnerID
+    INNER JOIN 
+        Teaches t
+        ON t.CourseID = ce.CourseID
+    WHERE 
+        ce.CourseID = @CourseID AND t.InstructorID = @InstructorID;
 END;
+EXEC LearnersCourses @CourseID = 102, @InstructorID = 4;
 
---Find the most common emotional state for the learners
-GO
-CREATE PROCEDURE CommonEmotionalState (
-@state VARCHAR(50) OUTPUT
-)
+
+
+
+
+
+go
+CREATE PROCEDURE LastActive
+    @ForumID INT,
+    @lastactive DATETIME OUTPUT
 AS
 BEGIN
-SELECT TOP 1 EmotionalState 
-FROM EmotionalFeedback
-GROUP BY EmotionalState
-ORDER BY COUNT(*) DESC;
+    SELECT 
+        @lastactive = last_active
+    FROM 
+        Discussion_forum
+    WHERE 
+        forumID = @ForumID;
 END;
 
---view all modules for a certain course sorted by their diffiulty
-GO
-CREATE PROCEDURE ModuleDifficulty(
-@CourseID INT
-)
+DECLARE @lastactive DATETIME;
+EXEC LastActive @ForumID = 1, @lastactive = @lastactive OUTPUT;
+SELECT @lastactive AS LastActiveTime;
+
+
+
+
+go
+CREATE PROCEDURE CommonEmotionalState
+    @state VARCHAR(50) OUTPUT
 AS
 BEGIN
-SELECT *
-FROM Module
-WHERE CourseID = @CourseID 
-ORDER BY difficulty_Level ASC;
+    SELECT TOP 1 
+        @state = emotionalState
+    FROM 
+        EmotionalFeedback
+    GROUP BY 
+        emotionalState
+    ORDER BY 
+        COUNT(*) DESC;
 END;
+DECLARE @state VARCHAR(50);
+EXEC CommonEmotionalState @state = @state OUTPUT;
+PRINT @state;
 
 
---View the skill with the highest proficiency level for a certain learner
-GO
-CREATE PROCEDURE ProficiencyLevel(
-@LearnerID INT
-)
-AS 
+go
+CREATE PROCEDURE ModuleDifficulty
+    @CourseID INT
+AS
 BEGIN
-    SELECT TOP 1 SkillName, ProficiencyLevel
-    FROM LearnerSkills
-    WHERE LearnerID = @LearnerID
-    ORDER BY ProficiencyLevel DESC;
-    END;
+    SELECT 
+        ModuleID,
+        Title AS ModuleTitle,
+        difficulty_Level,
+        contentURL
+    FROM 
+        Module
+    WHERE 
+        CourseID = @CourseID
+    ORDER BY 
+        CASE 
+            WHEN difficulty_Level = 'Beginner' THEN 1
+            WHEN difficulty_Level = 'Intermediate' THEN 2
+            WHEN difficulty_Level = 'Advanced' THEN 3
+            
+        END;
+END;
+EXEC ModuleDifficulty @CourseID = 103;
 
-    --Update a learner proficiency level for a certain skill
-    GO
-    CREATE PROCEDURE ProficiencyUpdate(
-    @SkillName VARCHAR(50),
+
+
+GO
+CREATE PROCEDURE Profeciencylevel
     @LearnerID INT,
-    @Level VARCHAR(50)
-    )
-    AS
-    BEGIN 
-    UPDATE LearnerSkills
-    SET ProficiencyLevel = @Level
-    WHERE SkillName = @SkillName AND LearnerID = @LearnerID;
-    END;
+    @skill VARCHAR(50) OUTPUT
+AS
+BEGIN
+    SELECT TOP 1 
+        @skill = skill_name
+    FROM 
+        SkillProgression
+    WHERE 
+        LearnerID = @LearnerID
+    ORDER BY 
+        proficiency_level DESC; 
+END;
+DECLARE @skill VARCHAR(50);
+EXEC Profeciencylevel @LearnerID = 1, @skill = @skill OUTPUT;
+SELECT @skill AS HighestProficiencySkill;
 
-    --find the learner with the least number of badges earned
-    GO
-    CREATE PROCEDURE LeastBadge(
-    @LearnerID INT
-    )
-    AS
-    BEGIN 
-        SELECT TOP 1 LearnerID 
-        FROM Achievement
-        GROUP BY LearnerID
-        ORDER BY COUNT(BadgeID) ASC;
-        END;
 
-        --find the most preferred learning type for the learners
-        GO
-        CREATE PROCEDURE PreferredType(
-        @Type VARCHAR(50) 
-        )
 
-        AS
-        BEGIN
-            SELECT TOP 1 PreferredContetntType
-            FROM LearnerProfiles
-            GROUP BY PreferredContentType
-            ORDER BY COUNT(*) DESC;
-            END;
+GO
+CREATE PROCEDURE Profeciencylevel
+    @LearnerID INT,
+    @skill VARCHAR(50) OUTPUT
+AS
+BEGIN
+    SELECT TOP 1 
+        @skill = skill_name
+    FROM 
+        SkillProgression
+    WHERE 
+        LearnerID = @LearnerID
+    ORDER BY 
+        proficiency_level DESC;
+END;
+DECLARE @skill VARCHAR(50);
+EXEC Profeciencylevel @LearnerID = 1, @skill = @skill OUTPUT;
+SELECT @skill AS HighestProficiencySkill;
 
-        --Generate analytics on assessment scores across modules or courses
-        GO
-        CREATE PROCEDURE AssessmentAnalytics (
-        @CourseID INT,
-        @ModuleID INT
-)
-        AS
-        BEGIN
-            SELECT AVG(Score) AS AverageScore, ModuleID, CourseID
-            FROM AssessmentResults ar
-            INNER JOIN Assessments a ON ar.AssessmentID = a.AssessmentID
-            WHERE a.CourseID = @CourseID AND a.ModuleID = @ModuleID
-            GROUP BY ModuleID, CourseID;
-        END;
 
-        --View trends in learners’ emotional feedback to support well-being
-        GO
-        CREATE PROCEDURE EmotionalTrendAnalysis (
+
+go
+CREATE PROCEDURE LeastBadge
+    @LearnerID INT OUTPUT
+AS
+BEGIN
+    SELECT TOP 1 
+        @LearnerID = LearnerID
+    FROM 
+        Achievement
+    GROUP BY 
+        LearnerID
+    ORDER BY 
+        COUNT(BadgeID) ASC;
+END;
+DROP PROCEDURE LeastBadge
+DECLARE @LearnerID INT;
+EXEC LeastBadge @LearnerID = @LearnerID OUTPUT;
+PRINT @LearnerID;
+
+
+
+
+go
+CREATE PROCEDURE PreferedType
+    @type VARCHAR(50) OUTPUT
+AS
+BEGIN
+    SELECT TOP 1 
+        @type = preference
+    FROM 
+        learning_preferences
+    GROUP BY 
+        preference
+    ORDER BY 
+        COUNT(*) DESC;
+END;
+DECLARE @type VARCHAR(50);
+EXEC PreferedType @type = @type OUTPUT;
+PRINT @type;
+
+
+
+
+
+
+go 
+CREATE PROCEDURE AssessmentAnalytics
+    @CourseID INT,
+    @ModuleID INT
+AS
+BEGIN
+    SELECT 
+        a.AssessmentID AS AssessmentID,
+        a.title AS AssessmentTitle,
+        AVG(ta.ScoredPoint) AS AverageScore
+    FROM 
+        Assessment a
+    INNER JOIN 
+        Takenassessment ta
+        ON a.AssessmentID = ta.AssessmentID
+    WHERE 
+        a.CourseID = @CourseID AND a.ModuleID = @ModuleID
+    GROUP BY 
+        a.AssessmentID, a.title;
+END;
+DROP    PROCEDURE AssessmentAnalytics
+
+EXEC AssessmentAnalytics @CourseID = 103, @ModuleID = 1;
+
+
+-- View trends in learners’ emotional feedback to support well-being in courses I teach.
+
+go
+CREATE PROCEDURE EmotionalTrendAnalysisIns
     @CourseID INT,
     @ModuleID INT,
-    @TimePeriod VARCHAR(50)
-)
+    @TimePeriod DATETIME
 AS
 BEGIN
-    SELECT EmotionalState, COUNT(*) AS Frequency, Timestamp
-    FROM EmotionalFeedback ef
-    INNER JOIN Enrollments e ON ef.LearnerID = e.LearnerID
-    WHERE e.CourseID = @CourseID AND e.ModuleID = @ModuleID
-    GROUP BY EmotionalState, Timestamp
-    ORDER BY Timestamp ASC;
+    SELECT 
+        ef.LearnerID,
+        l.first_name + ' ' + l.last_name AS LearnerName,
+        ef.timestamp,
+        ef.emotionalState
+    FROM 
+        EmotionalFeedback ef
+    INNER JOIN 
+        Learning_activities la
+        ON ef.activityID = la.ActivityID
+    INNER JOIN 
+        Learner l
+        ON ef.LearnerID = l.LearnerID
+    WHERE 
+        la.CourseID = @CourseID AND la.ModuleID = @ModuleID AND ef.timestamp >= @TimePeriod
+    ORDER BY 
+        ef.timestamp ASC;
 END;
+EXEC EmotionalTrendAnalysisIns @CourseID = 103, @ModuleID = 1, @TimePeriod = '2024-11-01';
