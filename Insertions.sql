@@ -1,360 +1,314 @@
-﻿USE GENGO;
+﻿USE GENGO
 
+
+-- Insert users into the Users table
+INSERT INTO Users (email, password, full_name, user_type)
+VALUES 
+('admin1@example.com', 'adminpassword', 'Admin One', 'admin'), -- Admin
+('learner1@example.com', 'learnerpassword', 'Learner One', 'learner'), -- Learner
+('instructor1@example.com', 'instructorpassword', 'Instructor One', 'instructor'), -- Instructor
+('learner2@example.com', 'securelearner', 'Learner Two', 'learner'); -- Another Learner
+
+-- Insert into Learner
+INSERT INTO Learner (LearnerID, first_name, last_name, Gender, birth_date, country,Email, cultural_background)
+VALUES 
+    (1, 'John', 'Doe', 'Male', '1995-06-15', 'USA','John@example.com', 'American'),
+    (2, 'Jane', 'Smith', 'Female', '1997-04-22', 'Canada','smith@example.com', 'Canadian');
+
+    INSERT INTO Admin (Name, Email, Password, Role)
+VALUES 
+('Admin1', 'admin1@example.com', 'password123', 'SuperAdmin'),
+('Admin2', 'admin2@example.com', 'password456', 'Admin'),
+('Admin3', 'admin3@example.com', 'password789', 'Admin');
+SELECT * FROM Admin;
+
+
+INSERT INTO Users (Name, Email, Password, Role)
+VALUES 
+('John Doe', 'john.doe@example.com', 'hashed_password1', 'Learner'),
+('Jane Smith', 'jane.smith@example.com', 'hashed_password2', 'Instructor'),
+('Admin User', 'admin@example.com', 'hashed_password3', 'Admin');
+
+
+-- Insert into Skills
+INSERT INTO skills (LearnerID, skill_name)
+VALUES 
+    (1, 'Java'),
+    (1, 'SQL'),
+    (2, 'Python'),
+    (2, 'C++');
+
+-- Insert into LearningPreferences
+INSERT INTO learning_preferences (preference, LearnerID)
+VALUES 
+    (1, 1),
+    (2, 2);
+
+-- Insert into PersonalizationProfiles
+INSERT INTO PersonalizationProfiles (LearnerID, ProfileID, prefered_content_type, emotional_state, personality_type)
+VALUES
+    (1, 101, 'Video', 'Calm', 'Introvert'),
+    (2, 102, 'Article', 'Happy', 'Extrovert');
+
+-- Insert into HealthCondition
+INSERT INTO HealthCondtion (LearnerID, ProfileID, condition)
+VALUES 
+    (1, 101, 'Asthma'),
+    (2, 102, 'None');
+
+-- Insert into Course
 INSERT INTO Course (CourseID, Title, Learning_objectives, credit_points, difficulty_level, description, Pre_requisites)
-VALUES
-    (101, 'Database Management', 'Understand databases', 4, 'Intermediate', 'Detailed course on DBMS', NULL),
-    (102, 'Introduction to Programming', 'Learn programming basics', 3, 'Easy', 'Basic course for beginners', NULL),
-    (103, 'DSA Management', 'Understand DS ALG', 8, 'Intermediate', 'Detailed course on DSA', NULL),
-    (104, 'Advanced SQL', 'Master SQL queries', 5, 'Advanced', 'In-depth SQL course for database experts', NULL);
-SELECT * FROM Course;
-DELETE FROM Course WHERE CourseID = 104;
-
-INSERT INTO Module (ModuleID, CourseID, Title, difficulty_Level, contentURL)
-VALUES
-    (1, 103, 'Variables and Data Types', 'Easy', 'http://example.com/module1'),
-    (2, 104, 'SQL Basics', 'Intermediate', 'http://example.com/module2');
-SELECT * FROM Module;
-
-
-INSERT INTO Target_traits (ModuleID, CourseID, Trait)
-VALUES
-    (1, 103, 'Logical Thinking'),
-    (1, 103, 'Problem Solving'),
-    (2, 104, 'Critical Thinking');
-SELECT * FROM Target_traits;
-
-
-INSERT INTO Learner (LearnerID, first_name, last_name, Gender, birth_date, country, cultural_background)
-VALUES
-    (1, 'Alice', 'Johnson', 'Female', '2001-05-21', 'USA', 'Western'),
-    (2, 'Bob', 'Smith', 'Male', '1999-12-15', 'Canada', 'Western'),
-    (3, 'Carlos', 'Diaz', 'Male', '2002-08-05', 'Mexico', 'Latin American');
-SELECT * FROM Learner;
-DELETE FROM Learner WHERE LearnerID = 3;
-
-INSERT INTO Skills (LearnerID, skill_name)
-VALUES
-    (1, 'Python'),
-    (1, 'Data Analysis'),
-    (2, 'Java'),
-    (3, 'Web Development'),
-    (3, 'Database Design');
-SELECT * FROM Skills;
-
-
+VALUES 
+    (101, 'Database Management', 'Understand databases', 4, 'Intermediate', 'Detailed course on DBMS',101 ),
+    (102, 'Introduction to Programming', 'Learn programming basics', 3, 'Easy', 'Basic course for beginners',102 ),
+    (103, 'Data Structures and Algorithms', 'Understand data structures and algorithms', 5, 'Advanced', 'Advanced course on algorithms', 103);
+    
+-- Insert into CoursePrerequisite
 INSERT INTO CoursePrerequisite (CourseID, Prereq)
 VALUES
-    (103, 101), 
-    (104, 102); 
-SELECT * FROM CoursePrerequisite;
+    (102, 101);  -- Prerequisite for 'Introduction to Programming' is 'Database Management'
 
-
-INSERT INTO Assessment (AssessmentID, total_marks, CourseID, ModuleID, passing_marks, criteria, weightage, Type, Title, description)
-VALUES
-    (1, 100, 103, 1, 50, 'Correctness', 20, 'Quiz', 'Basic Quiz on Variables', 'Test understanding of variables'),
-    (2, 100, 104, 2, 60, 'Accuracy', 25, 'Assignment', 'SQL Assignment', 'Practice writing SQL queries');
-SELECT * FROM Assessment;
-
-
-INSERT INTO Course_enrollment (EnrollmentID, CourseID, LearnerID, completion_date, enrollment_date, status)
-VALUES
-    (1, 103, 1, '2024-12-15', '2024-09-01', 'In Progress'),
-    (2, 104, 2, '2024-11-30', '2024-07-10', 'Completed'),
-    (3, 102, 3, '2024-11-20', '2024-06-25', 'In Progress');
-SELECT * FROM Course_enrollment;
-
-
-INSERT INTO Quest (QuestID, difficulty_level, criteria, description, title)
-VALUES
-    (1, 'Easy', 'Complete 5 activities', 'Solve beginner Python challenges', 'Python Starter Quest'),
-    (2, 'Medium', 'Collaborate with a team', 'Build a project with peers', 'Team Collaboration Quest'),
-    (3, 'Hard', 'Achieve mastery in algorithms', 'Pass advanced algorithm tests', 'Algorithm Mastery Quest');
-SELECT * FROM Quest;
-
-
-INSERT INTO Reward (RewardID, value, description, type)
-VALUES
-    (1, 50, 'Discount on next course', 'Voucher'),
-    (2, 20, 'E-book download', 'Digital'),
-    (3, 100, 'Free course access', 'Voucher');
-SELECT * FROM Reward;
-
-
-INSERT INTO QuestReward (RewardID, QuestID, LearnerID, Time_earned)
-VALUES
-    (1, 1, 1, '2024-11-20'),
-    (2, 2, 2, '2024-11-22'),
-    (3, 3, 3, '2024-11-24');
-SELECT * FROM QuestReward;
-
-
-INSERT INTO EmotionalFeedback ( LearnerID, timestamp, emotionalState)
-VALUES
-    ( 1, '2024-11-01 10:00:00', 'Happy'),
-    ( 2, '2024-11-02 14:30:00', 'Neutral'),
-    ( 3, '2024-11-25 18:00:00', 'Motivated');
-SELECT * FROM EmotionalFeedback;
-
-
-INSERT INTO TakenAssessment (AssessmentID, LearnerID, scoredPoint)
-VALUES
-    (1, 1, 85), 
-    (1, 2, 90), 
-    (2, 3, 88); 
-SELECT * FROM TakenAssessment;
-
-
-
-INSERT INTO Learning_activities (ActivityID, ModuleID, CourseID, activity_type, instruction_details, Max_points)
-VALUES
-    (1, 1, 103, 'Quiz', 'Answer questions on variables.', 20),
-    (2, 2, 104, 'Assignment', 'Complete SQL project.', 50);
-SELECT * FROM Learning_activities;
-
-
-INSERT INTO Leaderboard (LeaderboardID, season)
-VALUES
-    (1, 'Spring 2024'),
-    (2, 'Summer 2024'),
-    (3, 'Fall 2024');
-SELECT * FROM Leaderboard;
-
-
-INSERT INTO Badge (BadgeID, title, criteria, points, Description)
-VALUES
-    (1, 'Completion Badge', 'Complete a course', 10, 'Awarded for completing a course'),
-    (2, 'Quiz Master', 'Score 90%+ in a quiz', 15, 'Awarded for exceptional quiz performance'),
-    (3, 'Collaboration Badge', 'Participate in a collaborative quest', 20, 'Awarded for teamwork');
-SELECT * FROM Badge;
-
-
-INSERT INTO Notification (NotificationID, message, urgency_level)
-VALUES
-    (1, 'Your course enrollment is about to expire.', 'High'),
-    (2, 'New assignment available.', 'Medium'),
-    (3, 'Welcome to the platform!', 'Low');
-SELECT * FROM Notification;
-
-
-INSERT INTO HealthCondtion (LearnerID, ProfileID, condition)
-VALUES
-    (1, 1, 'Color Blindness'),
-    (2, 2, 'Dyslexia'),
-    (3, 3, 'Anxiety');
-SELECT * FROM HealthCondtion;
-
-
-INSERT INTO PersonalizationProfiles (LearnerID, ProfileID, prefered_content_type, emotional_state, personality_type)
+-- Insert into Module
+INSERT INTO Module (ModuleID, CourseID, Title, difficulty_Level, contentURL)
 VALUES 
-(1, 1, 'Videos', 'Engaged', 'Introvert'),
-(2, 2, 'Quizzes', 'Motivated', 'Extrovert'),
-(3, 3, 'Interactive Simulations', 'Curious', 'Analytical');
-SELECT * FROM PersonalizationProfiles
+    (1, 101, 'Variables and Data Types', 'Easy', 'http://example.com/module1'),
+    (2, 102, 'SQL Basics', 'Intermediate', 'http://example.com/module2'),
+    (3, 103, 'Arrays and Linked Lists', 'Advanced', 'http://example.com/module3');
+-- Insert into Target_traits
+INSERT INTO Target_traits (ModuleID, CourseID, Trait)
+VALUES 
+    (1, 101, 'Analytical Thinking'),
+    (2, 102, 'Problem Solving');
 
+-- Insert into ModuleContent
+INSERT INTO ModuleContent (ModuleID, CourseID, content_type)
+VALUES 
+    (1, 101, 'Lecture'),
+    (2, 102, 'Exercise');
 
-
+-- Insert into ContentLibrary
 INSERT INTO ContentLibrary (ID, ModuleID, CourseID, Title, description, metadata, type, content_URL)
+VALUES 
+    (1, 1, 101, 'Introduction to DB', 'Basic database concepts', 'Introduction, DBMS', 'PDF', 'http://example.com/db_intro'),
+    (2, 2, 102, 'Intro to SQL', 'Basic SQL queries', 'SQL, Querying', 'Video', 'http://example.com/sql_intro');
+
+-- Insert into Assessment
+INSERT INTO Assessment (AssessmentID, total_marks, CourseID, ModuleID, passing_marks, criteria, weightage, Type, Title, description)
+VALUES 
+    (1, 100, 101, 1, 50, 'Multiple Choice', 30, 'Quiz', 'Database Basics', 'Basic understanding of DBMS concepts'),
+    (2, 100, 102, 2, 50, 'Practical', 40, 'Assignment', 'SQL Queries', 'Hands-on SQL querying exercise');
+
+-- Insert into TakenAssessment
+INSERT INTO Takenassessment (AssessmentID, LearnerID, scoredPoint)
+VALUES 
+    (1, 1, 80),
+    (2, 2, 90);
+
+
+    -- Insert into Learning_activities
+INSERT INTO Learning_activities (ActivityID, ModuleID, CourseID, activity_type, instruction_details, Max_points)
+VALUES 
+    (1, 1, 101, 'Reading', 'Read Chapter 1', 10),
+    (2, 2, 102, 'Exercise', 'Complete SQL queries', 15);
+
+
+
+
+INSERT INTO Interaction_log 
 VALUES
-    (1, 1, 103, 'Variables Tutorial', 'Learn about variables and data types', 'variables, basics', 'Video', 'http://example.com/variables-video'),
-    (2, 2, 104, 'SQL Basics Tutorial', 'Master SQL queries and concepts', 'SQL, basics', 'Interactive', 'http://example.com/sql-basics');
-SELECT * FROM ContentLibrary;
+(1, 1, 1, 30, '2024-11-23 08:00:00', 'Viewed Module Content'),
+(2, 2, 1, 45, '2024-11-23 09:00:00', 'Completed Quiz')
 
-
-INSERT INTO Survey (ID, Title)
-VALUES
-    (1, 'Learning Preferences Survey'),
-    (2, 'Feedback on Course Content'),
-    (3, 'Instructor Effectiveness Survey');
-SELECT * FROM Survey;
-
-
-
-
-INSERT INTO SurveyQuestions (SurveyID, Question)
-VALUES
-    (1, 'What is your preferred learning style?'),
-    (1, 'How much time can you dedicate to learning daily?'),
-    (2, 'Was the course content engaging?'),
-    (3, 'How effective was the instructor in teaching the course?');
-SELECT * FROM SurveyQuestions;
-
-
-
-INSERT INTO FilledSurvey (SurveyID, Question, LearnerID, Answer)
-VALUES
-    (1, 'What is your preferred learning style?', 1, 'Visual'),
-    (1, 'How much time can you dedicate to learning daily?', 1, '2 hours'),
-    (2, 'Was the course content engaging?', 2, 'Yes'),
-    (3, 'How effective was the instructor in teaching the course?', 3, 'Very effective');
-SELECT * FROM FilledSurvey;
-
-
-
-INSERT INTO Learning_goal (ID, status, deadline, description)
-VALUES
-    (1, 'Completed', '2024-06-30', 'Complete all basic modules'),
-    (2, 'Pending', '2024-07-31', 'Earn a badge in advanced database skills'),
-    (3, 'In Progress', '2024-08-15', 'Collaborate on a group project in Python');
-SELECT * FROM Learning_goal;
-
-
-
-INSERT INTO LearnersGoals (GoalID, LearnerID)
-VALUES
-    (1, 1),
-    (2, 2),
-    (3, 3);
-SELECT * FROM LearnersGoals;
+select * from Interaction_log
 
 
 
 
 
-INSERT INTO Quest (QuestID, difficulty_level, criteria, description, title)
-VALUES
-    (1, 'Easy', 'Complete 5 activities', 'Solve beginner Python challenges', 'Python Starter Quest'),
-    (2, 'Medium', 'Collaborate with a team', 'Build a project with peers', 'Team Collaboration Quest'),
-    (3, 'Hard', 'Achieve mastery in algorithms', 'Pass advanced algorithm tests', 'Algorithm Mastery Quest');
-SELECT * FROM Quest;
+-- Insert into EmotionalFeedback
+INSERT INTO EmotionalFeedback ( LearnerID, activityID, timestamp, emotionalState)
+VALUES 
+    ( 1, 1, '2024-11-29 10:00:00', 'Excited'),
+    ( 2, 2, '2024-11-29 11:00:00', 'Confident');
 
-
-
-
-INSERT INTO QuestReward (RewardID, QuestID, LearnerID, Time_earned)
-VALUES
-    (1, 1, 1, '2024-07-20'),
-    (2, 2, 2, '2024-08-01'),
-    (3, 3, 3, '2024-09-10');
-SELECT * FROM QuestReward;
-
-
-
-INSERT INTO Collaborative (QuestID, LearnerID, deadline, Max_num_participants)
-VALUES
-    (2, 1, 20240630, 5),
-    (2, 2, 20240630, 5),
-    (2, 3, 20240630, 5);
-SELECT * FROM Collaborative;
-
-
-
-
-
-INSERT INTO Skill_Mastery (QuestID, LearnerID)
-VALUES
-    (1, 1),
-    (3, 2),
-    (1, 3);
-SELECT * FROM Skill_Mastery;
-
-
-
-
-INSERT INTO Skill_Mastery_Skill (LearnerID, Skills)
-VALUES
-    (1, 'Python Basics'),
-    (2, 'Data Structures'),
-    (3, 'Algorithms');
-SELECT * FROM Skill_Mastery_Skill;
-
-
-
-
-
-INSERT INTO Interaction_log (LogID, activity_ID, LearnerID, Duration, action_type)
-VALUES
-    (1, 1, 1, 30, 'Viewed Module Content'),
-    (2, 2, 2, 45, 'Completed Quiz');
-SELECT * FROM Interaction_log;
-
-
-
-INSERT INTO Ranking (LeaderboardID, LearnerID, CourseID, rank, total_points)
-VALUES
-(1, 1, 101, 1, 950),
-(1, 2, 101, 2, 850),
-(2, 3, 102, 1, 900),
-(2, 1, 102, 2, 870)
-select * FROM Ranking
-
-
-
-
-INSERT INTO SkillProgression (ID, proficiency_level, LearnerID, skill_name, timestamp)
-VALUES
-    (1, 1, 1, 'Python', '2024-11-25 10:00:00'),       
-    (2, 2, 1, 'Data Analysis', '2024-11-26 14:00:00'), 
-    (3, 1, 2, 'Java', '2024-11-27 09:30:00'),         
-    (4, 3, 3, 'Web Development', '2024-11-28 11:00:00'), 
-    (5, 2, 3, 'Database Design', '2024-11-29 15:45:00'); 
-
-    SELECT * FROM SkillProgression
-
-
-
-    INSERT INTO LearnerDiscussion (ForumID, LearnerID, Post, time)
-VALUES
-    (1, 1, 'This is a great topic to start learning SQL basics.', '2024-11-25 10:30:00'),
-    (1, 2, 'I found the example in the module very helpful.', '2024-11-25 11:00:00'),
-    (2, 3, 'How can we implement normalization for large databases?', '2024-11-26 14:15:00'),
-    (2, 1, 'Collaborating on database design has been insightful.', '2024-11-26 15:00:00'),
-    (1, 3, 'Can someone explain how to optimize SELECT queries?', '2024-11-27 09:45:00');
-    SELECT * FROM LearnerDiscussion
-
-INSERT INTO Discussion_forum (forumID, ModuleID, CourseID, title, last_active, timestamp, description)
-VALUES
-(1, 1, 103, 'Discussion on SQL Basics', '2024-11-20', '2024-11-20 09:00:00', 'A forum to discuss SQL basics and queries'),
-(2, 2, 104, 'Database Design Discussion', '2024-11-22', '2024-11-22 10:30:00', 'Discussion on the principles of database design and normalization')
-SELECT * FROM Discussion_forum
-
-
+-- Insert into Learning_path
 INSERT INTO Learning_path (pathID, LearnerID, ProfileID, completion_status, custom_content, adaptive_rules)
-VALUES
-(1, 1, 1, 'In Progress', 'Beginner Content', 'Adaptive based on quiz results'),
-(2, 2, 2, 'Completed', 'Database Tutorials', 'Focus on practical exercises');
-SELECT * FROM Learning_path
-
-
-
-
-INSERT INTO LearnersCollaboration (LearnerID, QuestID, CompletionStatus)
-VALUES
-    (1, 1, 'In Progress'),
-    (2, 2, 'Completed');
-
-    SELECT * FROM Collaborative
-
-
-   INSERT INTO Collaborative (QuestID, LearnerID, deadline, Max_num_participants)
-VALUES
-    (1, 1, '2024-12-31', 5),
-    (2, 2, '2024-12-31', 5);
-
-SELECT * FROM Collaborative
-
+VALUES 
+    (1, 1, 101, 'Completed', 'Extra reading material', 'No adaptive rules'),
+    (2, 2, 102, 'In Progress', 'Practice assignments', 'Adaptive learning paths based on performance');
+-- Insert into Instructor
 INSERT INTO Instructor (InstructorID, name, latest_qualification, expertise_area, email)
 VALUES
-(1, 'Prof. Liam Brown', 'MSc', 'Databases', 'liam@example.com'),
-(3, 'Dr. Maria Garcia', 'PhD', 'Data Structures', 'Maria@exmple.com'),
-(4, 'Prof. John Smith', 'MSc', 'Algorithms', 'Jphn@exmpl.com');
-SELECT * FROM Instructor
+    (1, 'Dr. Smith', 'PhD in Computer Science', 'Databases', 'dr.smith@example.com'),
+    (2, 'Prof. Johnson', 'Masters in Programming', 'Programming', 'prof.johnson@example.com');
+
+
+
+    INSERT INTO Pathreview (InstructorID, PathID, feedback)
+VALUES
+    (1, 1, 'Great progress! Keep up the good work.'),
+    (2, 2, 'The learner needs to focus more on practical exercises.')
+
+
+    INSERT INTO Emotionalfeedback_review (FeedbackID, InstructorID, feedback)
+VALUES
+    (1, 1, 'Learner is progressing well, keep encouraging them.'),
+    (2, 2, 'The neutral emotional state indicates the need for more engaging content.')
 
 
 
 
+-- Insert into Course_enrollment
+INSERT INTO Course_enrollment (EnrollmentID, CourseID, LearnerID, completion_date, enrollment_date, status)
+VALUES 
+    (1, 101, 1, '2024-12-01', '2024-10-01', 'Completed'),
+    (2, 102, 2, '2024-12-15', '2024-11-01', 'In Progress');
+
+    -- Insert into Teaches
 INSERT INTO Teaches (InstructorID, CourseID)
 VALUES
-(1, 101),
-(3, 101),
-(4, 102);
-SELECT * FROM Teaches
+    (1, 101),
+    (2, 102);
 
 
-INSERT INTO learning_preferences (preference, LearnerID)
+-- Insert into Leaderboard
+INSERT INTO Leaderboard (LeaderboardID, season)
+VALUES 
+    (1, 'Fall 2024');
+
+-- Insert into Ranking
+INSERT INTO Ranking (LeaderboardID, LearnerID, CourseID, rank, total_points)
+VALUES 
+    (1, 1, 101, 1, 95),
+    (1, 2, 102, 2, 85);
+
+-- Insert into Learning_goal
+INSERT INTO Learning_goal (ID, status, deadline, description)
+VALUES 
+    (1, 'In Progress', '2024-12-15', 'Master DBMS concepts'),
+    (2, 'Completed', '2024-11-30', 'Complete introductory programming');
+
+-- Insert into LearnersGoals
+INSERT INTO LearnersGoals (GoalID, LearnerID)
+VALUES 
+    (1, 1),
+    (2, 2);
+
+-- Insert into Survey
+INSERT INTO Survey (ID, Title)
+VALUES 
+    (1, 'Learner Satisfaction Survey'),
+    (2, 'Course Feedback Survey');
+    SELECT * FROM Survey
+-- Insert into SurveyQuestions  
+INSERT INTO SurveyQuestions (SurveyID, Question, LearnerID, Answer)
+VALUES 
+    (1, 'How do you rate the course?', 1, 'Excellent'),
+    (2, 'How do you rate the course?', 2, 'Good');
+    SELECT * FROM SurveyQuestions
+
+-- Insert into FilledSurvey
+INSERT INTO FilledSurvey (SurveyID, Question, LearnerID, Answer)
+VALUES 
+    (1, 'How do you rate the course?', 1, 'Excellent'),
+    (1, 'How do you rate the course?', 2, 'Good');
+
+-- Insert into Notification
+INSERT INTO Notification (NotificationID,  message, urgency_level)
+VALUES 
+    (1,  'Reminder: Course completion deadline approaching', 'High'),
+    (2,  'New course available: Data Structures and Algorithms', 'Medium');
+
+
+-- Insert into ReceivedNotification
+INSERT INTO ReceivedNotification (NotificationID, LearnerID)
+VALUES 
+    (1, 1);
+
+-- Insert into Badge
+INSERT INTO Badge (BadgeID, title, criteria, points, Description)
+VALUES 
+    (1, 'Top Performer', 'Scored 90+ in', 50, 'Awarded for outstanding performance');
+
+
+
+    INSERT INTO SkillProgression (id, proficiency_level, LearnerID, skill, timestamp)
 VALUES
-    (1, 1), 
-    (2, 1),  
-    (1, 2), 
-    (3, 3),  
-    (2, 3); 
-SELECT * FROM learning_preferences;
+    (1, 'Beginner', 1, 'Java', '2024-11-29 10:00:00'),
+    (2, 'Intermediate', 1, 'SQL', '2024-11-30 12:00:00'),
+    (3, 'Advanced', 2, 'Python', '2024-12-01 15:30:00'),
+    (4, 'Beginner', 2, 'C++', '2024-12-02 09:00:00'),
+    (5, 'Expert', 1, 'SQL', '2024-12-03 17:00:00');
+    
+
+-- Insert into Achievement
+INSERT INTO Achievement (AchievementID, LearnerID, BadgeID, description, date_earned, type)
+VALUES 
+    (1, 1, 1, 'Excellent performance in the course', '2024-11-29', 'Academic');
+
+-- Insert into Reward
+INSERT INTO Reward (RewardID, value, description, type)
+VALUES 
+    (1, 100.00, 'Gift card reward for top performer', 'Voucher');
+
+-- Insert into Quest
+INSERT INTO Quest (QuestID, difficulty_level, criteria, description, title)
+VALUES 
+    (1, 'Easy', 'Complete 3 assignments', 'A quest for learners to complete assignments', 'Beginner Quest');
+
+-- Insert into Skill_Mastery
+INSERT INTO skill_Mastery (QuestID, LearnerID)
+VALUES 
+    (1, 1),
+    (1, 2);
+
+
+    INSERT INTO Collaborative (QuestID, deadline, Max_num_participants)
+VALUES
+    (1,  '2024-12-31', 5)
+   
+    SELECT * FROM Collaborative
+    SELECT * FROM Learner
+
+    INSERT INTO Skill_Mastery_Skill (LearnerID, Skills)
+VALUES
+    (1, 'Java'),
+    (2, 'C++')
+
+
+  
+
+    INSERT INTO LearnersCollaboration (LearnerID, QuestID, CompletionStatus)
+VALUES
+    (1, 1, 'Completed'),
+    (2, 1, 'In Progress')
+
+
+
+    INSERT INTO LearnersMastery (LearnerID, QuestID, CompletionStatus)
+VALUES
+    (1, 1, 'Mastered'),
+    (2, 1, 'Beginner')
+
+    
+    
+    
+    INSERT INTO Discussion_forum ( ModuleID, CourseID, title, last_active, timestamp, description)
+VALUES
+    ( 1, 101, 'Java Discussion', '2024-10-01 09:00:00', '2024-10-01 10:00:00', 'Discuss Java programming challenges'),
+    ( 2, 102, 'C++ Discussion', '2024-10-02 10:00:00', '2024-10-02 11:30:00', 'C++ tips and tricks')
+ 
+
+
+      INSERT INTO LearnerDiscussion (ForumID, LearnerID, Post, time)
+VALUES
+    (1, 1, 'This is my first post!', '2024-10-01 10:00:00'),
+    (2, 2, 'I love this course!', '2024-10-02 11:30:00')
+
+
+
+    INSERT INTO QuestReward (RewardID, QuestID, LearnerID, Time_earned)
+VALUES
+    (1, 1, 1, '2024-11-29')
+  
+    SELECT * FROM QuestReward

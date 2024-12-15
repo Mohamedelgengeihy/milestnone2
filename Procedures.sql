@@ -1,6 +1,239 @@
-﻿CREATE DATABASE GENGO;
+﻿--USE GENGO;
 
-USE GENGO;
+
+
+
+go
+CREATE PROCEDURE deleteCourseByAdmin (
+    @admin_id INT,
+    @course_id INT
+)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Admins WHERE admin_id = @admin_id)
+    BEGIN
+        DELETE FROM Courses WHERE id = @course_id;
+    END
+    ELSE
+    BEGIN
+        RAISERROR ('Unauthorized action. Only admins can delete courses.', 16, 1);
+    END
+END;
+
+
+
+
+
+go
+CREATE PROCEDURE getAllAdmins
+AS
+BEGIN
+    SELECT 
+        a.admin_id,
+        u.username,
+        u.full_name,
+        a.permissions,
+        a.created_at
+    FROM Admins a
+    JOIN Users u ON a.username = u.username;
+END;
+
+
+
+
+go
+CREATE PROCEDURE availableCourses
+AS
+BEGIN
+    SELECT 
+        c.name,
+        c.description,
+        u.full_name AS instructor_name,
+        p.name AS prerequisite_name,
+        c.created_at
+    FROM Courses c
+    LEFT JOIN Users u ON c.instructor_id = u.username
+    LEFT JOIN Courses p ON c.prerequisite_id = p.id;
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Stored Procedure: Delete Learner's Personalization Profile
+GO
+CREATE PROCEDURE DeletePersonalizationProfile
+    @LearnerID INT
+AS
+BEGIN
+    DELETE FROM PersonalizationProfiles
+    WHERE LearnerID = @LearnerID;
+END;
+
+-- Stored Procedure: Delete User Account
+GO
+CREATE PROCEDURE DeleteUserAccount
+    @ID INT
+AS
+BEGIN
+    DELETE FROM Users
+    WHERE Id = @ID; 
+END;
+
+
+
+
+GO
+ALTER PROCEDURE RegisterUser
+    @Email NVARCHAR(100),
+    @PasswordHash NVARCHAR(255),
+    @Name NVARCHAR(100),
+    @Role NVARCHAR(20)
+AS
+BEGIN
+    INSERT INTO Users (Email, PasswordHash, Name, Role)
+    VALUES (@Email, @PasswordHash, @Name, @Role);
+
+    -- Fetch and return the user profile
+    SELECT Id, Name, Email, Role
+    FROM Users
+    WHERE Email = @Email;
+END;
+
+
+
+GO
+CREATE PROCEDURE DeleteInstructorAccount
+    @AdminID INT,
+    @InstructorID INT
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Users WHERE Id = @AdminID AND Role = 'Admin')
+    BEGIN
+        DELETE FROM Users
+        WHERE Id = @InstructorID AND Role = 'Instructor';
+    END
+    ELSE
+    BEGIN
+        PRINT 'Only admins can delete instructor accounts.';
+    END
+END;
+
+GO
+CREATE PROCEDURE DefineLearningGoal
+    @LearnerID INT,
+    @GoalID INT,
+    @Description NVARCHAR(255),
+    @Deadline DATETIME
+AS
+BEGIN
+    INSERT INTO Learning_goal (ID, description, deadline, status)
+    VALUES (@GoalID, @Description, @Deadline, 'In Progress');
+
+    INSERT INTO LearnersGoals (GoalID, LearnerID)
+    VALUES (@GoalID, @LearnerID);
+END;
+GO
+CREATE PROCEDURE CreateLearningPath
+    @InstructorID INT,
+    @LearnerID INT,
+    @ProfileID INT,
+    @CompletionStatus VARCHAR(50),
+    @CustomContent NVARCHAR(255),
+    @AdaptiveRules NVARCHAR(255)
+AS
+BEGIN
+    INSERT INTO Learning_path (pathID, LearnerID, ProfileID, completion_status, custom_content, adaptive_rules)
+    VALUES (
+        (SELECT COALESCE(MAX(pathID), 0) + 1 FROM Learning_path),
+        @LearnerID,
+        @ProfileID,
+        @CompletionStatus,
+        @CustomContent,
+        @AdaptiveRules
+    );
+END;
+
+GO
+CREATE PROCEDURE MonitorLearningPath
+    @LearnerID INT
+AS
+BEGIN
+    SELECT lp.pathID, pp.ProfileID, lp.completion_status, lp.custom_content
+    FROM Learning_path lp
+    INNER JOIN PersonalizationProfiles pp
+        ON lp.LearnerID = pp.LearnerID AND lp.ProfileID = pp.ProfileID
+    WHERE lp.LearnerID = @LearnerID;
+END;
+
+
+GO
+CREATE PROCEDURE AdminCreateDiscussionForum
+    @AdminID INT,
+    @Title NVARCHAR(100),
+    @ModuleID INT,
+    @CourseID INT,
+    @Description NVARCHAR(255)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Users WHERE Id = @AdminID AND Role IN ('Admin', 'Instructor'))
+    BEGIN
+        INSERT INTO Discussion_forum (title, ModuleID, CourseID, description, timestamp)
+        VALUES (@Title, @ModuleID, @CourseID, @Description, GETDATE());
+    END
+    ELSE
+    BEGIN
+        PRINT 'Only admins or instructors can create discussion forums.';
+    END
+END;
+
+GO
+CREATE PROCEDURE ViewGoalProgress
+    @LearnerID INT
+AS
+BEGIN
+    SELECT lg.ID AS GoalID, lg.description, lgp.Status, lgp.LastUpdated
+    FROM Learning_goal lg
+    INNER JOIN LearningGoalProgress lgp
+        ON lg.ID = lgp.GoalID
+    WHERE lgp.LearnerID = @LearnerID;
+END;
+
+
+
+-- Stored Procedure: Update User Profile
+GO
+CREATE PROCEDURE UpdateUserProfile
+    @ID INT,
+    @Name NVARCHAR(100),
+    @Email NVARCHAR(100),
+    @PasswordHash NVARCHAR(255)
+AS
+BEGIN
+    UPDATE Users
+    SET Name = @Name, Email = @Email, PasswordHash = @PasswordHash
+    WHERE ID = @ID;
+END;
+
+
+
 
 GO
 CREATE PROCEDURE ViewInfo(
@@ -11,8 +244,10 @@ BEGIN
 SELECT * FROM Learner
 WHERE LearnerID = @LearnerID;
 END;
-DROP PROCEDURE ViewInfo;
-EXEC ViewInfo @LearnerID = 1;
+
+
+
+
 
 GO
 CREATE PROCEDURE LearnerInfo(@LearnerID INT)
@@ -21,8 +256,10 @@ BEGIN
 SELECT * FROM PersonalizationProfiles
 WHERE LearnerID = @LearnerID;
 END;
-DROP PROCEDURE LearnerInfo
-EXEC LearnerInfo @LearnerID = 1;
+
+
+
+
 
 GO
 CREATE PROCEDURE EmotionalState
@@ -33,9 +270,7 @@ BEGIN
     FROM EmotionalFeedback
     WHERE LearnerID = @LearnerID
 END;
-DROP Procedure EmotionalState
 
-EXEC EmotionalState @LearnerID = 1;
 
 
 
@@ -47,8 +282,11 @@ BEGIN
     FROM Interaction_log
     WHERE LearnerID = @LearnerID ;
     END;
-    DROP PROC LogDetails
-EXEC LogDetails @LearnerID = 1;
+
+
+
+
+
 
     GO
 CREATE PROCEDURE InstructorReview (
@@ -60,8 +298,11 @@ SELECT feedback
 FROM EmotionalFeedback_review
 WHERE InstructorID = @InstructorID;
 END;
-exec InstructorReview @InstructorID = 1
-DROP PROCEDURE InstructorReview
+
+
+
+
+
 
 GO
 CREATE PROCEDURE CourseRemove (@CourseID INT)
@@ -70,9 +311,7 @@ BEGIN
     DELETE FROM Course
     WHERE CourseID = @CourseID;
 END;
-DROP PROC CourseRemove
 
-EXEC CourseRemove @CourseID = 1
 
 
     GO
@@ -87,8 +326,6 @@ BEGIN
         WHERE CourseID = a.CourseID
     );
 END;
-    exec HighestGrade 
-        DROP PROC HighestGrade
        
 
 
@@ -104,8 +341,6 @@ BEGIN
     GROUP BY t.CourseID
     HAVING COUNT(t.InstructorID) > 1; -- Only show courses with more than one instructor
 END;
-    DROP PROC InstructorCount
-    EXEC InstructorCount
 
 
 
@@ -127,8 +362,10 @@ BEGIN
     WHERE 
         rn.LearnerID = @LearnerID;
 END;
-EXEC ViewNot @LearnerID = 1;
-    DROP PROCEDURE ViewNot
+
+
+
+
 
 GO
 CREATE PROCEDURE CreateDiscussion 
@@ -141,11 +378,9 @@ AS
 BEGIN
     INSERT INTO Discussion_forum ( ModuleID, CourseID, Title, Description)
     VALUES ( @ModuleID, @CourseID, @Title, @Description );
+        PRINT 'Discussion added successfully.';
+        SELECT 'Discussion added successfully.' AS ConfirmationMessage;
 END;
-DROP PROCEDURE CreateDiscussion
-EXEC CreateDiscussion @ModuleID = 1, @CourseID = 103, @Title = 'Discussion 1', @Description = 'Discuss the module content';
-   
-   
    
  
    GO
@@ -155,12 +390,9 @@ CREATE PROCEDURE RemoveBadge(
 AS
 BEGIN
     DELETE FROM Badge WHERE BadgeID = @BadgeID;
+    PRINT 'Deleted successfully.';
+        SELECT 'Deleted successfully.' AS ConfirmationMessage;
 END;
-DROP PROCEDURE RemoveBadge
-EXEC RemoveBadge @BadgeID = 2;
-SELECT * FROM Badge;
-
-
 
 
 GO
@@ -169,14 +401,12 @@ AS
 BEGIN
     DELETE FROM Quest WHERE Criteria = @Criteria;
 END;
-EXEC CriteriaDelete @Criteria = 'Complete 5 activities';
-DROP PROCEDURE CriteriaDelete
-SELECT * FROM Quest;
 
 
 
 
-
+ALTER TABLE ReceivedNotification
+ADD ReadStatus BIT DEFAULT 0;
 GO
 CREATE PROCEDURE NotificationUpdate
     @LearnerID INT, 
@@ -190,9 +420,7 @@ BEGIN
     WHERE LearnerID = @LearnerID AND NotificationID = @NotificationID;
 END;
 
-EXEC NotificationUpdate @LearnerID = 1, @NotificationID = 1, @ReadStatus = 1;
-SELECT * FROM ReceivedNotification
-DROP PROCEDURE NotificationUpdate
+
 
 
 
@@ -229,7 +457,6 @@ BEGIN
         ef.LearnerID, ef.timestamp;
 END;
 
-EXEC EmotionalTrendAnalysis @CourseID = 102, @ModuleID = 1, @TimePeriod = '2024-11-01';
 
 
 
@@ -252,11 +479,6 @@ BEGIN
     WHERE 
         LearnerID = @LearnerID AND ProfileID = @ProfileID;
 END;
-SELECT * FROM PersonalizationProfiles
-EXEC ProfileUpdate @LearnerID = 1, @ProfileID = 1, 
-                   @PreferedContentType = 'Interactive Video', 
-                   @emotional_state = 'Motivated', 
-                   @PersonalityType = 'Introverted';
 
 
 
@@ -278,7 +500,6 @@ BEGIN
         AND r.type = @RewardType;
 END;
 
-EXEC TotalPoints @LearnerID = 1, @RewardType = 'Voucher';
 
 
 
@@ -303,8 +524,6 @@ BEGIN
         ce.LearnerID = @LearnerID
         AND ce.status != 'Completed'; 
 END;
-DROP PROCEDURE EnrolledCourses
-EXEC EnrolledCourses @LearnerID = 1;
 
 
 
@@ -332,10 +551,6 @@ BEGIN
         PRINT 'All prerequisites are completed.';
     END
 END;
-DROP PROCEDURE Prerequisites
-EXEC Prerequisites @LearnerID = 1, @CourseID = 102;
-SELECT * FROM CoursePrerequisite;
-
 
 
 go
@@ -358,7 +573,6 @@ BEGIN
         tt.Trait = @TargetTrait
         AND m.CourseID = @CourseID;
 END;
-EXEC Moduletraits @TargetTrait = 'Critical Thinking', @CourseID = 104;
 
 
 go
@@ -381,7 +595,6 @@ BEGIN
     ORDER BY 
         r.rank ASC;
 END;
-EXEC LeaderboardRank @LeaderboardID = 2;
 
 
 
@@ -397,9 +610,6 @@ BEGIN
     INSERT INTO EmotionalFeedback (LearnerID, activityId, timestamp, emotionalState)
     VALUES (@LearnerID, @ActivityID, @timestamp, @emotionalstate);
 END;
-DROP PROCEDURE ActivityEmotionalFeedback
-EXEC ActivityEmotionalFeedback @ActivityID = 2, @LearnerID = 1, @timestamp = '2024-11-25 14:00:00', @emotionalstate = 'Excited';
-SELECT * FROM EmotionalFeedback;
 
 
 
@@ -440,7 +650,6 @@ BEGIN
         PRINT 'Quest is full. Unable to join.';
     END
 END;
-EXEC JoinQuest @LearnerID = 1, @QuestID = 2;
 
 
 
@@ -453,7 +662,7 @@ CREATE PROCEDURE SkillsProfeciency
 AS
 BEGIN
     SELECT 
-        sp.skill_name AS Skill,
+        sp.skill AS Skill,
         sp.proficiency_level AS ProficiencyLevel,
         sp.timestamp AS LastUpdated
     FROM 
@@ -465,7 +674,6 @@ BEGIN
 END;
 SELECT * FROM SkillProgression
 
-EXEC SkillsProfeciency @LearnerID = 1;
 
 
 go
@@ -486,9 +694,6 @@ BEGIN
         PRINT 'No score found for the given assessment and learner.';
 END;
 
-DECLARE @score INT;
-EXEC Viewscore @LearnerID = 1, @AssessmentID = 1, @score = @score OUTPUT;
-PRINT @score;
 
 
 go
@@ -512,7 +717,6 @@ BEGIN
     WHERE 
         a.CourseID = @CourseID AND a.ModuleID = @ModuleID AND ta.LearnerID = @LearnerID;
 END;
-EXEC AssessmentsList @CourseID = 103, @ModuleID = 1, @LearnerID = 1;
 
 
 
@@ -543,7 +747,6 @@ BEGIN
     END
 END;
 
-EXEC Courseregister @LearnerID = 1, @CourseID = 103;
 
 
 
@@ -560,9 +763,6 @@ BEGIN
     VALUES (@DiscussionID, @LearnerID, @PostContent, GETDATE());
 END;
 
-EXEC Post @LearnerID = 1, @DiscussionID = 1, 
-          @PostContent = 'This is a helpful discussion on programming basics.';
-
 
 
 
@@ -576,7 +776,7 @@ BEGIN
     VALUES (@GoalID, @LearnerID);
 END;
 
-EXEC AddGoal @LearnerID = 1, @GoalID = 3;
+
 
 
 
@@ -603,7 +803,6 @@ BEGIN
         lp.LearnerID = @LearnerID;
 END;
 
-EXEC CurrentPath @LearnerID = 1;
 
 
 
@@ -634,7 +833,6 @@ BEGIN
         AND cq.deadline >= GETDATE();
 END;
 
-EXEC QuestMembers @LearnerID = 1;
 
 
 go
@@ -664,7 +862,9 @@ BEGIN
         lm.CompletionStatus IS NOT NULL OR a.BadgeID IS NOT NULL;
 END;
 
- eXEC QuestProgress @LearnerID = 120;
+
+
+
 
 go
  CREATE PROCEDURE GoalReminder
@@ -695,11 +895,9 @@ BEGIN
         WHERE lgp.LearnerID = @LearnerID AND GETDATE() > lg.deadline
     )
     BEGIN
-        PRINT 'Reminder: You have goals that are overdue. Please review your learning goals timeline.';
+        PRINT 'Reminder: You have goals that are overdue.';
     END;
 END;
-
-exec GoalReminder @LearnerID = 1;
 
 
 
@@ -717,13 +915,10 @@ BEGIN
     FROM 
         SkillProgression sp
     WHERE 
-        sp.LearnerID = @LearnerID AND sp.skill_name = @Skill
+        sp.LearnerID = @LearnerID AND sp.skill = @Skill
     ORDER BY 
         sp.timestamp ASC;
 END;
-DROP PROCEDURE SkillProgressHistory
-EXEC SkillProgressHistory @LearnerID = 1, @Skill = 'Data Analysis';
-SELECT * FROM SkillProgression;
 
 
 
@@ -753,7 +948,6 @@ BEGIN
     ORDER BY 
         ta.ScoredPoint DESC;
 END;
-EXEC AssessmentAnalysis @LearnerID = 1;
 
 
 
@@ -784,7 +978,6 @@ BEGIN
         r.rank DESC; 
 END;
 
-exec LeaderboardFilter @LearnerID = 2;
 
 
 go
@@ -805,7 +998,6 @@ BEGIN
         s.skill_name = @SkillName;
 END;
 
-EXEC SkillLearners @SkillName = 'Java';
 
 
 
@@ -829,7 +1021,6 @@ BEGIN
     );
 END;
 
-EXEC NewActivity @CourseID = 103, @ModuleID = 1, @ActivityType = 'Quiz', @InstructionDetails = 'Complete the quiz to test your knowledge.', @MaxPoints = 10;
 
 
 go
@@ -852,11 +1043,6 @@ BEGIN
     );
 END;
 
-EXEC NewAchievement @LearnerID = 2, 
-                    @BadgeID = 3, 
-                    @Description = 'Scored above 90% on final exam.', 
-                    @Date_Earned = '2024-12-01', 
-                    @Type = 'Exam Achievement';
 
 
 go
@@ -878,7 +1064,6 @@ BEGIN
         a.BadgeID = @BadgeID;
 END;
 
-EXEC LearnerBadge @BadgeID = 3;
 
 
 
@@ -897,7 +1082,7 @@ BEGIN
         WHERE LearnerID = @LearnerID AND ProfileID = @ProfileID
     )
     BEGIN
-        PRINT 'Error: LearnerID or ProfileID does not exist in PersonalizationProfiles.';
+        PRINT 'Error: LearnerID or ProfileID does not exist in PersonalizationProfiles.'
         RETURN;
     END;
 
@@ -913,12 +1098,6 @@ BEGIN
 
     PRINT 'New learning path added successfully.';
 END;
-EXEC NewPath @LearnerID = 1, 
-             @ProfileID = 1, 
-             @Completion_Status = 'In Progress', 
-             @Custom_Content = 'Custom content for the learner', 
-             @AdaptiveRules = 'Adaptive rules for the learner';
-
 
 
 
@@ -943,21 +1122,23 @@ BEGIN
         ce.LearnerID = @LearnerID
         AND ce.status = 'Completed'; 
 END;
-EXEC TakenCourses @LearnerID = 2;
 
 
 
 
-go
+
+DROP PROCEDURE CollaborativeQuest;
+GO
 CREATE PROCEDURE CollaborativeQuest
     @difficulty_level VARCHAR(50),
     @criteria VARCHAR(50),
-    @description VARCHAR(50),
+    @description VARCHAR(255),
     @title VARCHAR(50),
     @Maxnumparticipants INT,
     @deadline DATETIME
 AS
 BEGIN
+    -- Insert into Quest table
     INSERT INTO Quest (QuestID, difficulty_level, criteria, description, title)
     VALUES (
         (SELECT COALESCE(MAX(QuestID), 0) + 1 FROM Quest), 
@@ -967,17 +1148,15 @@ BEGIN
         @title
     );
 
-    INSERT INTO Collaborative (QuestID, deadline, max_num_participants)
+    -- Insert into Collaborative table
+    INSERT INTO Collaborative (QuestID,  deadline, Max_num_participants)
     VALUES (
         (SELECT MAX(QuestID) FROM Quest), 
+        
         @deadline, 
         @Maxnumparticipants
     );
 END;
-DROP PROCEDURE CollaborativeQuest
-Exec CollaborativeQuest @difficulty_level = 'Intermediate', @criteria = 'Complete 5 activities', @description = 'Complete the intermediate level activities', @title = 'Intermediate Quest', @Maxnumparticipants = 5, @deadline = '2024-12-31';
-
-
 
 
 go
@@ -993,7 +1172,7 @@ BEGIN
    
 END;
 
-EXEC DeadlineUpdate @QuestID = 2, @deadline = '2025-01-15';
+EXEC DeadlineUpdate @QuestID = 1, @deadline = '2025-01-15';
 
 
 go
@@ -1010,7 +1189,6 @@ BEGIN
     PRINT 'Grade updated successfully.';
 END;
 
-EXEC GradeUpdate @LearnerID = 3, @AssessmentID = 1, @points = 95;
 
 
 
@@ -1032,11 +1210,6 @@ BEGIN
     PRINT 'Notification sent successfully.';
 END;
 
-EXEC AssessmentNot @NotificationID = 2, @message = 'New assessment available for completion.', @urgencylevel = 'High', @LearnerID = 1;
-
-
-
-
 
 go
 CREATE PROCEDURE NewGoal
@@ -1049,7 +1222,6 @@ BEGIN
     INSERT INTO Learning_goal (ID, status, deadline, description)
     VALUES (@GoalID, @status, @deadline, @description);
 END;
-EXEC NewGoal @GoalID = 4, @status = 'In Progress', @deadline = '2025-01-31', @description = 'Complete all advanced level activities.';
 
 
 
@@ -1082,7 +1254,6 @@ BEGIN
     WHERE 
         ce.CourseID = @CourseID AND t.InstructorID = @InstructorID;
 END;
-EXEC LearnersCourses @CourseID = 102, @InstructorID = 4;
 
 
 
@@ -1103,9 +1274,6 @@ BEGIN
         forumID = @ForumID;
 END;
 
-DECLARE @lastactive DATETIME;
-EXEC LastActive @ForumID = 1, @lastactive = @lastactive OUTPUT;
-SELECT @lastactive AS LastActiveTime;
 
 
 
@@ -1124,9 +1292,6 @@ BEGIN
     ORDER BY 
         COUNT(*) DESC;
 END;
-DECLARE @state VARCHAR(50);
-EXEC CommonEmotionalState @state = @state OUTPUT;
-PRINT @state;
 
 
 go
@@ -1151,7 +1316,6 @@ BEGIN
             
         END;
 END;
-EXEC ModuleDifficulty @CourseID = 103;
 
 
 
@@ -1162,7 +1326,7 @@ CREATE PROCEDURE Profeciencylevel
 AS
 BEGIN
     SELECT TOP 1 
-        @skill = skill_name
+        @skill = skill
     FROM 
         SkillProgression
     WHERE 
@@ -1170,9 +1334,6 @@ BEGIN
     ORDER BY 
         proficiency_level DESC; 
 END;
-DECLARE @skill VARCHAR(50);
-EXEC Profeciencylevel @LearnerID = 1, @skill = @skill OUTPUT;
-SELECT @skill AS HighestProficiencySkill;
 
 
 
@@ -1183,7 +1344,7 @@ CREATE PROCEDURE Profeciencylevel
 AS
 BEGIN
     SELECT TOP 1 
-        @skill = skill_name
+        @skill = skill
     FROM 
         SkillProgression
     WHERE 
@@ -1191,10 +1352,6 @@ BEGIN
     ORDER BY 
         proficiency_level DESC;
 END;
-DECLARE @skill VARCHAR(50);
-EXEC Profeciencylevel @LearnerID = 1, @skill = @skill OUTPUT;
-SELECT @skill AS HighestProficiencySkill;
-
 
 
 go
@@ -1211,10 +1368,6 @@ BEGIN
     ORDER BY 
         COUNT(BadgeID) ASC;
 END;
-DROP PROCEDURE LeastBadge
-DECLARE @LearnerID INT;
-EXEC LeastBadge @LearnerID = @LearnerID OUTPUT;
-PRINT @LearnerID;
 
 
 
@@ -1233,9 +1386,7 @@ BEGIN
     ORDER BY 
         COUNT(*) DESC;
 END;
-DECLARE @type VARCHAR(50);
-EXEC PreferedType @type = @type OUTPUT;
-PRINT @type;
+
 
 
 
@@ -1262,12 +1413,9 @@ BEGIN
     GROUP BY 
         a.AssessmentID, a.title;
 END;
-DROP    PROCEDURE AssessmentAnalytics
-
-EXEC AssessmentAnalytics @CourseID = 103, @ModuleID = 1;
 
 
--- View trends in learners’ emotional feedback to support well-being in courses I teach.
+
 
 go
 CREATE PROCEDURE EmotionalTrendAnalysisIns
@@ -1294,4 +1442,3 @@ BEGIN
     ORDER BY 
         ef.timestamp ASC;
 END;
-EXEC EmotionalTrendAnalysisIns @CourseID = 103, @ModuleID = 1, @TimePeriod = '2024-11-01';
