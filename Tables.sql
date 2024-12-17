@@ -1,9 +1,11 @@
 ﻿CREATE DATABASE GENGO
 USE GENGO
 
+
+
 -- Table for storing learner information
 CREATE TABLE Learner (
-    LearnerID INT IDENTITY PRIMARY KEY,
+    LearnerID INT PRIMARY KEY,
     first_name VARCHAR (50),
     last_name VARCHAR(50),
     Gender VARCHAR (20),
@@ -15,16 +17,6 @@ CREATE TABLE Learner (
 
 
 
-
-CREATE TABLE LearningGoalProgress (
-    ProgressID INT IDENTITY(1,1) PRIMARY KEY,
-    GoalID INT,
-    LearnerID INT,
-    Status VARCHAR(50),
-    LastUpdated DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (GoalID) REFERENCES Learning_goal(ID),
-    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
-);
 
 
 
@@ -313,6 +305,18 @@ CREATE TABLE Learning_goal (
     description VARCHAR(255)
 );
 
+
+CREATE TABLE LearningGoalProgress (
+    ProgressID INT IDENTITY(1,1) PRIMARY KEY,
+    GoalID INT,
+    LearnerID INT,
+    Status VARCHAR(50),
+    LastUpdated DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (GoalID) REFERENCES Learning_goal(ID),
+    FOREIGN KEY (LearnerID) REFERENCES Learner(LearnerID)
+);
+
+
 -- Many-to-many relation between Learning_goal and Learner
 CREATE TABLE LearnersGoals (
     GoalID INT,
@@ -534,13 +538,6 @@ CREATE TABLE Users (
 );
 
 
--- Insert users into the Users table
-INSERT INTO Users (email, password, full_name, user_type)
-VALUES 
-('admin1@example.com', 'adminpassword', 'Admin One', 'admin'), -- Admin
-('learner1@example.com', 'learnerpassword', 'Learner One', 'learner'), -- Learner
-('instructor1@example.com', 'instructorpassword', 'Instructor One', 'instructor'), -- Instructor
-('learner2@example.com', 'securelearner', 'Learner Two', 'learner'); -- Another Learner
 
 Go
 CREATE PROCEDURE loginproc (
@@ -572,17 +569,6 @@ BEGIN
     END
 END;
 
--- Insert sample data
-
-
--- Declare variables for outputs
---DECLARE @success INT;
---DECLARE @type NVARCHAR(50);
-
--- Call the procedure
-
--- Check outputs
---SELECT @success AS LoginSuccess, @type AS UserType;
 
 
 

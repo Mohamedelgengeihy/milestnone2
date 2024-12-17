@@ -1,79 +1,4 @@
-﻿--USE GENGO;
-
-
-
-
-go
-CREATE PROCEDURE deleteCourseByAdmin (
-    @admin_id INT,
-    @course_id INT
-)
-AS
-BEGIN
-    IF EXISTS (SELECT 1 FROM Admins WHERE admin_id = @admin_id)
-    BEGIN
-        DELETE FROM Courses WHERE id = @course_id;
-    END
-    ELSE
-    BEGIN
-        RAISERROR ('Unauthorized action. Only admins can delete courses.', 16, 1);
-    END
-END;
-
-
-
-
-
-go
-CREATE PROCEDURE getAllAdmins
-AS
-BEGIN
-    SELECT 
-        a.admin_id,
-        u.username,
-        u.full_name,
-        a.permissions,
-        a.created_at
-    FROM Admins a
-    JOIN Users u ON a.username = u.username;
-END;
-
-
-
-
-go
-CREATE PROCEDURE availableCourses
-AS
-BEGIN
-    SELECT 
-        c.name,
-        c.description,
-        u.full_name AS instructor_name,
-        p.name AS prerequisite_name,
-        c.created_at
-    FROM Courses c
-    LEFT JOIN Users u ON c.instructor_id = u.username
-    LEFT JOIN Courses p ON c.prerequisite_id = p.id;
-END;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+﻿USE GENGO;
 
 
 
@@ -87,15 +12,7 @@ BEGIN
     WHERE LearnerID = @LearnerID;
 END;
 
--- Stored Procedure: Delete User Account
-GO
-CREATE PROCEDURE DeleteUserAccount
-    @ID INT
-AS
-BEGIN
-    DELETE FROM Users
-    WHERE Id = @ID; 
-END;
+
 
 
 
@@ -1441,4 +1358,44 @@ BEGIN
         la.CourseID = @CourseID AND la.ModuleID = @ModuleID AND ef.timestamp >= @TimePeriod
     ORDER BY 
         ef.timestamp ASC;
+END;
+
+
+
+GO
+CREATE PROCEDURE ValidateUserLogin
+    @Email NVARCHAR(100),
+    @PasswordHash NVARCHAR(255)
+AS
+BEGIN
+    SELECT Id, Name, Role
+    FROM Users
+    WHERE Email = @Email AND PasswordHash = @PasswordHash;
+END;
+
+
+
+GO
+CREATE PROCEDURE DeleteLearnerAccount
+    @LearnerID INT
+AS
+BEGIN
+    DELETE FROM ReceivedNotification WHERE LearnerID = @LearnerID;
+    DELETE FROM Course_enrollment WHERE LearnerID = @LearnerID;
+    DELETE FROM PersonalizationProfiles WHERE LearnerID = @LearnerID;
+    DELETE FROM Learning_path WHERE LearnerID = @LearnerID;
+    DELETE FROM Learner WHERE LearnerID = @LearnerID;
+    PRINT 'Learner account and associated data deleted successfully.';
+END;
+ALTER TABLE Users
+ADD ProfilePicture NVARCHAR(255); -- Path or URL to the image
+GO
+CREATE PROCEDURE UploadProfilePicture
+    @username INT,
+    @ProfilePicture NVARCHAR(255)
+AS
+BEGIN
+    UPDATE Users
+    SET ProfilePicture = @ProfilePicture
+    WHERE username = @username;
 END;

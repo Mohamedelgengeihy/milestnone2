@@ -23,11 +23,6 @@ VALUES
 SELECT * FROM Admin;
 
 
-INSERT INTO Users (Name, Email, Password, Role)
-VALUES 
-('John Doe', 'john.doe@example.com', 'hashed_password1', 'Learner'),
-('Jane Smith', 'jane.smith@example.com', 'hashed_password2', 'Instructor'),
-('Admin User', 'admin@example.com', 'hashed_password3', 'Admin');
 
 
 -- Insert into Skills
@@ -312,3 +307,13 @@ VALUES
     (1, 1, 1, '2024-11-29')
   
     SELECT * FROM QuestReward
+
+
+
+    -- Insert users into the Users table
+INSERT INTO Users (email, password, full_name, user_type)
+VALUES 
+('admin1@example.com', 'adminpassword', 'Admin One', 'admin'), -- Admin
+('learner1@example.com', 'learnerpassword', 'Learner One', 'learner'), -- Learner
+('instructor1@example.com', 'instructorpassword', 'Instructor One', 'instructor'), -- Instructor
+('learner2@example.com', 'securelearner', 'Learner Two', 'learner'); -- Another Learner
