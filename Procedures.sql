@@ -15,24 +15,24 @@ END;
 
 
 
-
-
 GO
-ALTER PROCEDURE RegisterUser
-    @Email NVARCHAR(100),
-    @PasswordHash NVARCHAR(255),
-    @Name NVARCHAR(100),
-    @Role NVARCHAR(20)
+CREATE PROCEDURE RegisterUser
+    @Email NVARCHAR(255),
+    @Password NVARCHAR(255),
+    @FullName NVARCHAR(255),
+    @UserType NVARCHAR(50)
 AS
 BEGIN
-    INSERT INTO Users (Email, PasswordHash, Name, Role)
-    VALUES (@Email, @PasswordHash, @Name, @Role);
+    -- Insert a new user into the Users table
+    INSERT INTO Users (email, password, full_name, user_type, created_at, updated_at)
+    VALUES (@Email, @Password, @FullName, @UserType, GETDATE(), GETDATE());
 
     -- Fetch and return the user profile
-    SELECT Id, Name, Email, Role
+    SELECT username AS Id, full_name AS Name, email, user_type AS Role
     FROM Users
-    WHERE Email = @Email;
+    WHERE email = @Email;
 END;
+
 
 
 
@@ -42,16 +42,47 @@ CREATE PROCEDURE DeleteInstructorAccount
     @InstructorID INT
 AS
 BEGIN
-    IF EXISTS (SELECT 1 FROM Users WHERE Id = @AdminID AND Role = 'Admin')
+    IF EXISTS (SELECT 1 FROM Users WHERE username = @AdminID AND user_type = 'Admin')
     BEGIN
         DELETE FROM Users
-        WHERE Id = @InstructorID AND Role = 'Instructor';
+        WHERE username = @InstructorID AND user_type = 'Instructor';
+
+        PRINT 'Instructor account deleted successfully.';
     END
     ELSE
     BEGIN
         PRINT 'Only admins can delete instructor accounts.';
     END
 END;
+
+GO
+CREATE PROCEDURE DeleteLearnerAccount
+    @AdminID INT,
+    @LearnerID INT
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Users WHERE username = @AdminID AND user_type = 'Admin')
+    BEGIN
+        -- Delete related data in other tables
+        DELETE FROM ReceivedNotification WHERE LearnerID = @LearnerID;
+        DELETE FROM Course_enrollment WHERE LearnerID = @LearnerID;
+        DELETE FROM PersonalizationProfiles WHERE LearnerID = @LearnerID;
+        DELETE FROM Learning_path WHERE LearnerID = @LearnerID;
+
+        -- Delete learner from Users table
+        DELETE FROM Users WHERE username = @LearnerID AND user_type = 'Learner';
+
+        PRINT 'Learner account and associated data deleted successfully.';
+    END
+    ELSE
+    BEGIN
+        PRINT 'Only admins can delete learner accounts.';
+    END
+END;
+
+
+
+
 
 GO
 CREATE PROCEDURE DefineLearningGoal
@@ -67,6 +98,11 @@ BEGIN
     INSERT INTO LearnersGoals (GoalID, LearnerID)
     VALUES (@GoalID, @LearnerID);
 END;
+
+
+
+
+
 GO
 CREATE PROCEDURE CreateLearningPath
     @InstructorID INT,
@@ -110,16 +146,19 @@ CREATE PROCEDURE AdminCreateDiscussionForum
     @Description NVARCHAR(255)
 AS
 BEGIN
-    IF EXISTS (SELECT 1 FROM Users WHERE Id = @AdminID AND Role IN ('Admin', 'Instructor'))
+    IF EXISTS (SELECT 1 FROM Users WHERE username = @AdminID AND user_type IN ('Admin', 'Instructor'))
     BEGIN
-        INSERT INTO Discussion_forum (title, ModuleID, CourseID, description, timestamp)
-        VALUES (@Title, @ModuleID, @CourseID, @Description, GETDATE());
+        INSERT INTO Discussion_forum (ModuleID, CourseID, title, description, timestamp)
+        VALUES (@ModuleID, @CourseID, @Title, @Description, GETDATE());
+
+        PRINT 'Discussion forum created successfully.';
     END
     ELSE
     BEGIN
         PRINT 'Only admins or instructors can create discussion forums.';
     END
 END;
+
 
 GO
 CREATE PROCEDURE ViewGoalProgress
@@ -138,16 +177,22 @@ END;
 -- Stored Procedure: Update User Profile
 GO
 CREATE PROCEDURE UpdateUserProfile
-    @ID INT,
-    @Name NVARCHAR(100),
-    @Email NVARCHAR(100),
-    @PasswordHash NVARCHAR(255)
+    @Username INT,
+    @FullName NVARCHAR(255),
+    @Email NVARCHAR(255),
+    @ProfilePicture NVARCHAR(255)
 AS
 BEGIN
     UPDATE Users
-    SET Name = @Name, Email = @Email, PasswordHash = @PasswordHash
-    WHERE ID = @ID;
+    SET full_name = @FullName,
+        email = @Email,
+        profile_picture = @ProfilePicture,
+        updated_at = GETDATE()
+    WHERE username = @Username;
+
+    PRINT 'User profile updated successfully.';
 END;
+
 
 
 
@@ -538,15 +583,17 @@ AS
 BEGIN
     DECLARE @CurrentParticipants INT;
     DECLARE @MaxParticipants INT;
-    DECLARE @Deadline DATE;
+    DECLARE @Deadline DATETIME;
 
+    -- Get the number of current participants from LearnersCollaboration
     SELECT 
         @CurrentParticipants = COUNT(*)
     FROM 
-        Collaborative
+        LearnersCollaboration
     WHERE 
         QuestID = @QuestID;
 
+    -- Get max participants and deadline from Collaborative table
     SELECT 
         @MaxParticipants = Max_num_participants,
         @Deadline = deadline
@@ -557,8 +604,8 @@ BEGIN
 
     IF @CurrentParticipants < @MaxParticipants
     BEGIN
-        INSERT INTO Collaborative (QuestID, LearnerID, deadline, Max_num_participants)
-        VALUES (@QuestID, @LearnerID, @Deadline, @MaxParticipants);
+        INSERT INTO LearnersCollaboration (LearnerID, QuestID, CompletionStatus)
+        VALUES (@LearnerID, @QuestID, 'In Progress');
 
         PRINT 'You have successfully joined the quest.';
     END
@@ -567,6 +614,7 @@ BEGIN
         PRINT 'Quest is full. Unable to join.';
     END
 END;
+
 
 
 
@@ -724,7 +772,7 @@ END;
 
 
 
-go
+GO
 CREATE PROCEDURE QuestMembers
     @LearnerID INT
 AS
@@ -733,22 +781,22 @@ BEGIN
         lc.QuestID,
         l.LearnerID,
         l.first_name + ' ' + l.last_name AS MemberName,
-        cq.deadline
+        c.deadline
     FROM 
-        Collaborative lc
+        LearnersCollaboration lc
     INNER JOIN 
-        Collaborative my_quests
-        ON lc.QuestID = my_quests.QuestID
+        Collaborative c ON lc.QuestID = c.QuestID
     INNER JOIN 
-        Collaborative cq
-        ON lc.QuestID = cq.QuestID
-    INNER JOIN 
-        Learner l
-        ON lc.LearnerID = l.LearnerID
+        Learner l ON lc.LearnerID = l.LearnerID
     WHERE 
-        my_quests.LearnerID = @LearnerID
-        AND cq.deadline >= GETDATE();
+        lc.QuestID IN (
+            SELECT QuestID 
+            FROM LearnersCollaboration 
+            WHERE LearnerID = @LearnerID
+        )
+        AND c.deadline >= GETDATE();
 END;
+
 
 
 
@@ -1364,13 +1412,15 @@ END;
 
 GO
 CREATE PROCEDURE ValidateUserLogin
-    @Email NVARCHAR(100),
-    @PasswordHash NVARCHAR(255)
+    @Email NVARCHAR(255),
+    @Password NVARCHAR(255)
 AS
 BEGIN
-    SELECT Id, Name, Role
+    SET NOCOUNT ON;
+
+    SELECT username AS Id, full_name AS Name, user_type AS Role
     FROM Users
-    WHERE Email = @Email AND PasswordHash = @PasswordHash;
+    WHERE email = @Email AND password = @Password;
 END;
 
 
@@ -1398,4 +1448,209 @@ BEGIN
     UPDATE Users
     SET ProfilePicture = @ProfilePicture
     WHERE username = @username;
+END;
+
+
+
+
+
+
+
+GO
+CREATE PROCEDURE AddPostToDiscussion
+    @ForumID INT,
+    @LearnerID INT,
+    @PostContent NVARCHAR(MAX)
+AS
+BEGIN
+    INSERT INTO LearnerDiscussion (ForumID, LearnerID, Post, time)
+    VALUES (@ForumID, @LearnerID, @PostContent, GETDATE());
+
+    PRINT 'Post added successfully.';
+END;
+
+
+
+
+
+GO
+CREATE PROCEDURE ViewUserProfile
+    @Username INT
+AS
+BEGIN
+    SELECT 
+        username AS UserID,
+        full_name AS FullName,
+        email AS Email,
+        user_type AS Role,
+        profile_picture AS ProfilePicture,
+        created_at AS CreatedAt
+    FROM Users
+    WHERE username = @Username;
+END;
+
+
+
+
+
+GO
+CREATE PROCEDURE UpdatePersonalInfo
+    @Username INT,
+    @FullName NVARCHAR(255),
+    @Email NVARCHAR(255)
+AS
+BEGIN
+    UPDATE Users
+    SET full_name = @FullName,
+        email = @Email,
+        updated_at = GETDATE()
+    WHERE username = @Username;
+
+    PRINT 'Profile updated successfully.';
+END;
+
+
+
+
+GO
+CREATE PROCEDURE ViewActiveForums
+AS
+BEGIN
+    SELECT 
+        forumID AS ForumID,
+        title AS ForumTitle,
+        description AS Description,
+        timestamp AS CreatedAt
+    FROM Discussion_forum;
+END;
+
+
+
+
+GO
+CREATE PROCEDURE AddNewActivity
+    @ModuleID INT,
+    @CourseID INT,
+    @ActivityType VARCHAR(50),
+    @Instructions VARCHAR(MAX),
+    @MaxPoints INT
+AS
+BEGIN
+    INSERT INTO Learning_activities (ActivityID, ModuleID, CourseID, activity_type, instruction_details, Max_points)
+    VALUES ((SELECT COALESCE(MAX(ActivityID), 0) + 1 FROM Learning_activities), 
+            @ModuleID, 
+            @CourseID, 
+            @ActivityType, 
+            @Instructions, 
+            @MaxPoints);
+END;
+
+
+--chatgpt
+GO
+CREATE PROCEDURE GetCourseModules
+    @CourseID INT
+AS
+BEGIN
+    SELECT ModuleID, Title, Description, Status
+    FROM Module
+    WHERE CourseID = @CourseID;
+END;
+
+
+GO
+CREATE PROCEDURE EnrolledCourses
+    @LearnerID INT
+AS
+BEGIN
+    SELECT ce.CourseID, c.Title AS CourseTitle, ce.enrollment_date, ce.completion_date, ce.status
+    FROM Course_enrollment ce
+    INNER JOIN Course c
+    ON ce.CourseID = c.CourseID
+    WHERE ce.LearnerID = @LearnerID AND ce.status != 'Completed'; 
+END;
+
+
+
+GO
+CREATE PROCEDURE TakenCourses
+    @LearnerID INT
+AS
+BEGIN
+    SELECT ce.CourseID, c.Title AS CourseTitle, ce.enrollment_date, ce.completion_date, ce.status
+    FROM Course_enrollment ce
+    INNER JOIN Course c
+    ON ce.CourseID = c.CourseID
+    WHERE ce.LearnerID = @LearnerID AND ce.status = 'Completed'; 
+END;
+
+
+
+
+GO
+CREATE PROCEDURE Prerequisites
+    @LearnerID INT,
+    @CourseID INT
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM CoursePrerequisite cp
+        LEFT JOIN Course_enrollment ce
+        ON cp.Prereq = ce.CourseID AND ce.LearnerID = @LearnerID AND ce.status = 'Completed'
+        WHERE cp.CourseID = @CourseID AND ce.CourseID IS NULL
+    )
+    BEGIN
+        PRINT 'Not all prerequisites are completed.';
+    END
+    ELSE
+    BEGIN
+        PRINT 'All prerequisites are completed.';
+    END
+END;
+
+
+
+GO
+CREATE PROCEDURE DeleteCourse
+    @InstructorID INT,
+    @CourseID INT
+AS
+BEGIN
+    -- Check if no learners are enrolled in the course
+    IF NOT EXISTS (SELECT 1 FROM Course_enrollment WHERE CourseID = @CourseID)
+    BEGIN
+        DELETE FROM Course WHERE CourseID = @CourseID;
+        PRINT 'Course deleted successfully.';
+    END
+    ELSE
+    BEGIN
+        PRINT 'Course cannot be deleted because there are enrolled learners.';
+    END
+END;
+
+
+GO
+CREATE PROCEDURE Courseregister
+    @LearnerID INT,
+    @CourseID INT
+AS
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM CoursePrerequisite cp
+        LEFT JOIN Course_enrollment ce
+        ON cp.Prereq = ce.CourseID AND ce.LearnerID = @LearnerID AND ce.status = 'Completed'
+        WHERE cp.CourseID = @CourseID AND ce.CourseID IS NULL
+    )
+    BEGIN
+        PRINT 'Prerequisites not completed. Registration rejected.';
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Course_enrollment (EnrollmentID, CourseID, LearnerID, enrollment_date, status)
+        VALUES ((SELECT COALESCE(MAX(EnrollmentID), 0) + 1 FROM Course_enrollment), 
+                @CourseID, @LearnerID, GETDATE(), 'Not Started');
+        PRINT 'Registration approved.';
+    END
 END;
