@@ -1,0 +1,47 @@
+﻿@model YarabFinal.Models.User
+
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0"><i class="bi bi-person-plus"></i> Create User</h3>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" class="form-control" type="password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label">Full Name</label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="UserType" class="form-label">User Type</label>
+                    <input asp-for="UserType" class="form-control" />
+                    <span asp-validation-for="UserType" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ProfilePicture" class="form-label">Profile Picture URL</label>
+                    <input asp-for="ProfilePicture" class="form-control" />
+                    <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Save</button>
+                    <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left-circle"></i> Back</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

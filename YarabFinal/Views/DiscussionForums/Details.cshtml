@@ -1,0 +1,79 @@
+﻿@model YarabFinal.Models.DiscussionForum
+
+@{
+    ViewData["Title"] = "Discussion Details";
+    var posts = ViewData["Posts"] as List<YarabFinal.Models.LearnerDiscussion>;
+}
+
+<h2 class="mb-3">@Model.Title</h2>
+<p class="text-muted">@Model.Description</p>
+
+<!-- Add Post Section -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4>Add a Post</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="AddPost" method="post">
+            <!-- Hidden field for Forum ID -->
+            <input type="hidden" name="forumId" value="@Model.ForumId" />
+
+            <!-- Input field for Learner ID -->
+            <div class="form-group">
+                <label for="learnerId" class="font-weight-bold">Your ID:</label>
+                <input type="number" name="learnerId" class="form-control" placeholder="Enter your ID" required />
+            </div>
+
+            <!-- Textarea for Post Content -->
+            <div class="form-group mt-2">
+                <label for="postContent" class="font-weight-bold">Your Post:</label>
+                <textarea name="postContent" class="form-control" rows="4" placeholder="Write your post here..." required></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-success mt-2">Submit Post</button>
+        </form>
+
+        <!-- Success/Error Messages -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mt-3" role="alert">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger mt-3" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Display Posts Section -->
+<div class="mt-4">
+    <h4 class="mb-3">Posts</h4>
+    @if (posts != null && posts.Any())
+    {
+        <ul class="list-group">
+            @foreach (var post in posts)
+            {
+                <li class="list-group-item">
+                    <p class="mb-1">@post.Post</p>
+                    <small class="text-muted">
+                        Posted by  ID: @post.LearnerId on @(post.Time.HasValue ? post.Time.Value.ToString("g") : "Unknown Time")
+                    </small>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">No posts yet in this discussion. Be the first to add one!</p>
+    }
+</div>
+
+<!-- Back to Discussions -->
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Back to Discussions</a>
+</div>

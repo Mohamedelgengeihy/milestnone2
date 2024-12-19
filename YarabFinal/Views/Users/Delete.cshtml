@@ -1,0 +1,25 @@
+﻿@model YarabFinal.Models.PersonalizationProfile
+
+@{
+    ViewData["Title"] = "Delete Personalization Profile";
+}
+
+<h1>Delete</h1>
+<h3>Are you sure you want to delete this profile?</h3>
+<div>
+    <dl class="row">
+        <dt class="col-sm-4">Preferred Content Type</dt>
+        <dd class="col-sm-8">@Model.PreferedContentType</dd>
+
+        <dt class="col-sm-4">Emotional State</dt>
+        <dd class="col-sm-8">@Model.EmotionalState</dd>
+
+        <dt class="col-sm-4">Personality Type</dt>
+        <dd class="col-sm-8">@Model.PersonalityType</dd>
+    </dl>
+
+    <form asp-action="DeleteConfirmed" asp-route-id="@Model.ProfileId" method="post">
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

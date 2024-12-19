@@ -1,0 +1,98 @@
+﻿@model YarabFinal.Models.Learner
+
+@{
+    ViewData["Title"] = "Create Learner";
+}
+
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <!-- Card Header -->
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-plus-circle"></i> Create New Learner
+            </h3>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <!-- LearnerId -->
+                <div class="mb-3">
+                    <label asp-for="LearnerId" class="form-label text-secondary">Learner ID</label>
+                    <input asp-for="LearnerId" class="form-control" placeholder="Enter Learner ID" />
+                    <span asp-validation-for="LearnerId" class="text-danger"></span>
+                </div>
+
+                <!-- FirstName -->
+                <div class="mb-3">
+                    <label asp-for="FirstName" class="form-label text-secondary">First Name</label>
+                    <input asp-for="FirstName" class="form-control" placeholder="Enter First Name" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <!-- LastName -->
+                <div class="mb-3">
+                    <label asp-for="LastName" class="form-label text-secondary">Last Name</label>
+                    <input asp-for="LastName" class="form-control" placeholder="Enter Last Name" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+
+                <!-- Gender -->
+                <div class="mb-3">
+                    <label asp-for="Gender" class="form-label text-secondary">Gender</label>
+                    <input asp-for="Gender" class="form-control" placeholder="Enter Gender" />
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <!-- BirthDate -->
+                <div class="mb-3">
+                    <label asp-for="BirthDate" class="form-label text-secondary">Birth Date</label>
+                    <input asp-for="BirthDate" type="date" class="form-control" />
+                    <span asp-validation-for="BirthDate" class="text-danger"></span>
+                </div>
+
+                <!-- Country -->
+                <div class="mb-3">
+                    <label asp-for="Country" class="form-label text-secondary">Country</label>
+                    <input asp-for="Country" class="form-control" placeholder="Enter Country" />
+                    <span asp-validation-for="Country" class="text-danger"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label text-secondary">Email</label>
+                    <input asp-for="Email" class="form-control" placeholder="Enter Email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <!-- CulturalBackground -->
+                <div class="mb-3">
+                    <label asp-for="CulturalBackground" class="form-label text-secondary">Cultural Background</label>
+                    <input asp-for="CulturalBackground" class="form-control" placeholder="Enter Cultural Background" />
+                    <span asp-validation-for="CulturalBackground" class="text-danger"></span>
+                </div>
+
+                <!-- Buttons -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-check-circle"></i> Create
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary px-4 ms-2">
+                        <i class="bi bi-arrow-left-circle"></i> Back to List
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+<!-- Include Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">

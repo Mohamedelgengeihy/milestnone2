@@ -1,0 +1,62 @@
+﻿@model YarabFinal.Models.User
+
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-info text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-info-circle"></i> User Details
+            </h3>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8">@Model.Email</dd>
+
+                <dt class="col-sm-4">Full Name</dt>
+                <dd class="col-sm-8">@Model.FullName</dd>
+
+                <dt class="col-sm-4">User Type</dt>
+                <dd class="col-sm-8">@Model.UserType</dd>
+            </dl>
+        </div>
+
+        <div class="card-footer text-center">
+            <!-- Edit Button -->
+            <a asp-action="Edit" asp-route-id="@Model?.Username" class="btn btn-warning me-2">
+                <i class="bi bi-pencil-square"></i> Edit
+            </a>
+
+            <!-- Back to List -->
+            <a asp-action="Index" class="btn btn-secondary me-2">
+                <i class="bi bi-arrow-left-circle"></i> Back to List
+            </a>
+
+            <!-- View Learners Button -->
+            <a asp-controller="Learners" asp-action="Index" class="btn btn-success me-2">
+                <i class="bi bi-people"></i> View Learners
+            </a>
+
+            <!-- View Instructors Button -->
+            <a asp-controller="Instructors" asp-action="Index" class="btn btn-primary me-2">
+                <i class="bi bi-person-badge"></i> View Instructors
+            </a>
+
+            <!-- View Personalization Profiles Button -->
+            <a asp-controller="PersonalizationProfiles" asp-action="Index" class="btn btn-info me-2">
+                <i class="bi bi-bar-chart-line"></i> View Personalization Profiles
+            </a>
+
+            <!-- Create Discussion Forum Button -->
+            <a asp-controller="DiscussionForums" asp-action="Create" class="btn btn-dark me-2">
+                <i class="bi bi-chat-dots"></i> Create Discussion Forum
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">

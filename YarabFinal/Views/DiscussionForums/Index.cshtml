@@ -1,0 +1,52 @@
+﻿@model IEnumerable<YarabFinal.Models.DiscussionForum>
+
+@{
+    ViewData["Title"] = "Discussion Forums";
+}
+
+<h2>Discussion Forums</h2>
+
+<!-- Display any success or error messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<!-- Table of Discussions -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Last Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var forum in Model)
+        {
+            <tr>
+                <td>@forum.Title</td>
+                <td>@(forum.Description ?? "No description provided")</td>
+                <td>
+                    <!-- View Details -->
+                    <a asp-action="Details" asp-route-id="@forum.ForumId" class="btn btn-primary btn-sm">View</a>
+
+                    <!-- Delete Button -->
+                    <form asp-action="Delete" method="post" style="display:inline;"
+                          onsubmit="return confirm('Are you sure you want to delete this forum?');">
+                        <input type="hidden" name="id" value="@forum.ForumId" />
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Button Removed -->

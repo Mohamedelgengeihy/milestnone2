@@ -1,0 +1,27 @@
+﻿@model YarabFinal.Models.DiscussionForum
+
+<h2>@Model.Title</h2>
+<p>@Model.Description</p>
+
+<!-- Button to Add Post -->
+<a asp-action="AddPost" class="btn btn-success mb-3">Add Post</a>
+
+<!-- List of Posts -->
+<h4>Posts</h4>
+@if (ViewData["Posts"] is List<YarabFinal.Models.LearnerDiscussion> posts && posts.Any())
+{
+    <ul class="list-group">
+        @foreach (var post in posts)
+        {
+            <li class="list-group-item">
+                @post.Post
+                <br />
+                <small class="text-muted">Posted on @post.Time.Value.ToString("g")</small>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No posts yet in this discussion.</p>
+}

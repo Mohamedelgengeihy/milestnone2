@@ -1,0 +1,108 @@
+﻿@model YarabFinal.Models.Learner
+
+@{
+    ViewData["Title"] = "Edit Learner";
+}
+
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-pencil-square"></i> Edit Learner
+            </h3>
+        </div>
+
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="LearnerId" />
+
+                <!-- First Name -->
+                <div class="mb-3">
+                    <label asp-for="FirstName" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-person"></i> First Name
+                    </label>
+                    <input asp-for="FirstName" class="form-control" placeholder="Enter First Name" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <!-- Last Name -->
+                <div class="mb-3">
+                    <label asp-for="LastName" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-person"></i> Last Name
+                    </label>
+                    <input asp-for="LastName" class="form-control" placeholder="Enter Last Name" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+
+                <!-- Gender -->
+                <div class="mb-3">
+                    <label asp-for="Gender" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-gender-ambiguous"></i> Gender
+                    </label>
+                    <select asp-for="Gender" class="form-select">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <!-- Birth Date -->
+                <div class="mb-3">
+                    <label asp-for="BirthDate" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-calendar"></i> Birth Date
+                    </label>
+                    <input asp-for="BirthDate" class="form-control" type="date" />
+                    <span asp-validation-for="BirthDate" class="text-danger"></span>
+                </div>
+
+                <!-- Country -->
+                <div class="mb-3">
+                    <label asp-for="Country" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-globe"></i> Country
+                    </label>
+                    <input asp-for="Country" class="form-control" placeholder="Enter Country" />
+                    <span asp-validation-for="Country" class="text-danger"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-envelope"></i> Email
+                    </label>
+                    <input asp-for="Email" class="form-control" placeholder="Enter Email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <!-- Cultural Background -->
+                <div class="mb-3">
+                    <label asp-for="CulturalBackground" class="form-label fw-bold text-secondary">
+                        <i class="bi bi-brush"></i> Cultural Background
+                    </label>
+                    <input asp-for="CulturalBackground" class="form-control" placeholder="Enter Cultural Background" />
+                    <span asp-validation-for="CulturalBackground" class="text-danger"></span>
+                </div>
+
+                <!-- Submit and Cancel Buttons -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary px-4 ms-2">
+                        <i class="bi bi-arrow-left-circle"></i> Back to List
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+<!-- Add Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">

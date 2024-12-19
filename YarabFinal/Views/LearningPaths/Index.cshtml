@@ -1,0 +1,52 @@
+﻿@model IEnumerable<YarabFinal.Models.LearningPath>
+
+@{
+    ViewData["Title"] = ViewData["LearnerId"] != null ? "Learning Paths for Learner" : "All Learning Paths";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (ViewData["LearnerId"] != null)
+{
+    <p>
+        <a asp-controller="Learners" asp-action="Details" asp-route-id="@ViewData["LearnerId"]" class="btn btn-secondary">
+            <i class="bi bi-arrow-left-circle"></i> Back to Learner Details
+        </a>
+    </p>
+}
+else
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Learning Path
+        </a>
+    </p>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.CompletionStatus)</th>
+            <th>@Html.DisplayNameFor(model => model.CustomContent)</th>
+            <th>@Html.DisplayNameFor(model => model.AdaptiveRules)</th>
+            <th>@Html.DisplayNameFor(model => model.PersonalizationProfile)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.CompletionStatus)</td>
+                <td>@Html.DisplayFor(modelItem => item.CustomContent)</td>
+                <td>@Html.DisplayFor(modelItem => item.AdaptiveRules)</td>
+                <td>@Html.DisplayFor(modelItem => item.PersonalizationProfile.LearnerId)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.PathId" class="btn btn-warning">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.PathId" class="btn btn-info">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.PathId" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,85 @@
+﻿@model YarabFinal.Models.LearningPath
+
+@{
+    ViewData["Title"] = "Create Learning Path";
+}
+
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-info text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-plus-circle"></i> Create Learning Path
+            </h3>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <!-- PathId -->
+                <div class="form-group mb-3">
+                    <label asp-for="PathId" class="form-label"></label>
+                    <input asp-for="PathId" class="form-control" placeholder="Enter Path ID" />
+                    <span asp-validation-for="PathId" class="text-danger"></span>
+                </div>
+
+                <!-- LearnerId -->
+                <div class="form-group mb-3">
+                    <label asp-for="LearnerId" class="form-label"></label>
+                    <select asp-for="LearnerId" class="form-control" asp-items="ViewBag.LearnerId">
+                        <option value="">-- Select Learner --</option>
+                    </select>
+                    <span asp-validation-for="LearnerId" class="text-danger"></span>
+                </div>
+
+                <!-- ProfileId -->
+                <div class="form-group mb-3">
+                    <label asp-for="ProfileId" class="form-label"></label>
+                    <select asp-for="ProfileId" class="form-control" asp-items="ViewBag.ProfileId">
+                        <option value="">-- Select Profile --</option>
+                    </select>
+                    <span asp-validation-for="ProfileId" class="text-danger"></span>
+                </div>
+
+                <!-- CompletionStatus -->
+                <div class="form-group mb-3">
+                    <label asp-for="CompletionStatus" class="form-label"></label>
+                    <input asp-for="CompletionStatus" class="form-control" placeholder="Enter Completion Status" />
+                    <span asp-validation-for="CompletionStatus" class="text-danger"></span>
+                </div>
+
+                <!-- CustomContent -->
+                <div class="form-group mb-3">
+                    <label asp-for="CustomContent" class="form-label"></label>
+                    <input asp-for="CustomContent" class="form-control" placeholder="Enter Custom Content" />
+                    <span asp-validation-for="CustomContent" class="text-danger"></span>
+                </div>
+
+                <!-- AdaptiveRules -->
+                <div class="form-group mb-4">
+                    <label asp-for="AdaptiveRules" class="form-label"></label>
+                    <input asp-for="AdaptiveRules" class="form-control" placeholder="Enter Adaptive Rules" />
+                    <span asp-validation-for="AdaptiveRules" class="text-danger"></span>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="bi bi-check-circle"></i> Create
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left-circle"></i> Back to List
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
